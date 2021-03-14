@@ -1,4 +1,4 @@
-package com.my.example.collaction.fragments
+package com.my.example.collaction.fragments.login
 
 import android.content.Context
 import android.os.Bundle
@@ -7,17 +7,17 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import com.my.example.collaction.R
-import com.my.example.collaction.interfaces.BaseOnClickListener
-import kotlinx.android.synthetic.main.fragment_home.view.*
+import com.my.example.collaction.interfaces.LoginOnClickListener
+import kotlinx.android.synthetic.main.fragment_login.view.*
 
 
-class HomeFragment : Fragment() {
+class LoginFragment : Fragment() {
 
-    lateinit var baseOnClickListener: BaseOnClickListener
+    private lateinit var mLoginOnClickListener: LoginOnClickListener
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
-        baseOnClickListener = context as BaseOnClickListener
+        mLoginOnClickListener = context as LoginOnClickListener
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -25,23 +25,22 @@ class HomeFragment : Fragment() {
 
     }
 
-
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
     ): View?
     {
 
-        return inflater.inflate(R.layout.fragment_home, container, false)
+        return inflater.inflate(R.layout.fragment_login, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-
-        view.home_text.setOnClickListener {
-            baseOnClickListener.signOut()
-        }
         super.onViewCreated(view, savedInstanceState)
+        view.sign_in_btn.setOnClickListener {
+            mLoginOnClickListener.signIn(view.email_text.text.toString(), view.password_text.text.toString())
+        }
+        view.to_sign_up.setOnClickListener {
+            mLoginOnClickListener.onSignUp()
+        }
     }
-
 }

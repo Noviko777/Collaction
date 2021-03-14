@@ -127,6 +127,7 @@
                 style="@style/textViewEditStyle"
                 android:text="Name"/>
             <EditText
+                android:id="@+id/name_edit_text"
                 android:layout_width="match_parent"
                 android:layout_height="55dp"
                 android:background="@drawable/edit_text_background"
@@ -137,6 +138,7 @@
                 style="@style/textViewEditStyle"
                 android:text="Username"/>
             <EditText
+                android:id="@+id/username_edit_text"
                 android:layout_width="match_parent"
                 android:layout_height="55dp"
                 android:background="@drawable/edit_text_background"
@@ -147,6 +149,7 @@
                 style="@style/textViewEditStyle"
                 android:text="Website"/>
             <EditText
+                android:id="@+id/website_edit_text"
                 android:layout_width="match_parent"
                 android:layout_height="55dp"
                 android:background="@drawable/edit_text_background"
@@ -157,6 +160,7 @@
                 style="@style/textViewEditStyle"
                 android:text="Bio"/>
             <EditText
+                android:id="@+id/bio_edit_text"
                 android:layout_width="match_parent"
                 android:layout_height="55dp"
                 android:background="@drawable/edit_text_background"
@@ -175,6 +179,7 @@
                 style="@style/textViewEditStyle"
                 android:text="E-mail"/>
             <EditText
+                android:id="@+id/email_edit_text"
                 android:layout_width="match_parent"
                 android:layout_height="55dp"
                 android:background="@drawable/edit_text_background"
@@ -185,6 +190,7 @@
                 style="@style/textViewEditStyle"
                 android:text="Phone"/>
             <EditText
+                android:id="@+id/phone_edit_text"
                 android:layout_width="match_parent"
                 android:layout_height="55dp"
                 android:background="@drawable/edit_text_background"

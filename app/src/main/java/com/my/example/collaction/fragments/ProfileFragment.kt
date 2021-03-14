@@ -37,7 +37,7 @@ class ProfileFragment : Fragment() {
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
         view.editProfileImageView.setOnClickListener {
-            parentActivity.openOtherFragment(Fragment(R.layout.fragment_edit_profile))
+            parentActivity.openOtherFragment(EditProfileFragment())
         }
     }
 }
