@@ -81,11 +81,11 @@
             android:gravity="center"
             android:textAlignment="center"
             app:layout_constraintStart_toEndOf="@id/cancelImageView"
-            app:layout_constraintEnd_toStartOf="@id/saveImageView"
+            app:layout_constraintEnd_toStartOf="@id/save_image_view"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintTop_toTopOf="parent"/>
         <ImageView
-            android:id="@+id/saveImageView"
+            android:id="@+id/save_image_view"
             android:layout_width="0dp"
             android:layout_height="0dp"
             android:padding="8dp"
@@ -101,6 +101,7 @@
         android:layout_height="0dp"
         android:paddingTop="35dp"
         android:background="@drawable/main_panel_background"
+
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="@id/guideMainPanel"

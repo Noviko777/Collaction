@@ -62,23 +62,6 @@ class LoginActivity : AppCompatActivity(), KeyboardVisibilityEventListener, Base
 
     }
 
-//    fun signInClick(view: View) {
-//        val email = email_text.text.toString()
-//        val password = password_text.text.toString()
-//        if(validate(email, password)) {
-//            mAuth.signInWithEmailAndPassword(email, password).addOnCompleteListener {
-//                if(it.isSuccessful) {
-//                    startActivity(Intent(this, HomeActivity::class.java))
-//                    finish()
-//                } else {
-//                    Toast.makeText(this, "Incorrect email or password", Toast.LENGTH_SHORT).show()
-//                }
-//            }
-//        }
-//        else {
-//            Toast.makeText(this, "Please fill email and password", Toast.LENGTH_SHORT).show()
-//        }
-//    }
 
     private fun validate(email: String, password: String) = email.isNotEmpty() && password.isNotEmpty()
 
@@ -116,23 +99,33 @@ class LoginActivity : AppCompatActivity(), KeyboardVisibilityEventListener, Base
 
     override fun signUp(email: String, password: String) {
         if(validate(email, password)) {
-            mAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener {
+            mAuth.fetchSignInMethodsForEmail(email).addOnCompleteListener {
                 if(it.isSuccessful) {
-                    val user = User(name = mName, username = mUsername, email = email)
-                    mDatabase.child("users").child(it.result!!.user.uid).setValue(user).addOnCompleteListener {
-                        if(it.isSuccessful) {
-                            startActivity(Intent(this, HomeActivity::class.java))
-                            finish()
-                        }
-                        else {
-                            Toast.makeText(this, "Failed registration", Toast.LENGTH_SHORT).show()
+                    if(it.result?.signInMethods?.isEmpty() == true) {
+                        mAuth.createUserWithEmailAndPassword(email, password).addOnCompleteListener {
+                            if(it.isSuccessful) {
+                                val user = User(name = mName, username = mUsername, email = email)
+                                mDatabase.child("users").child(it.result!!.user.uid).setValue(user).addOnCompleteListener {
+                                    if(it.isSuccessful) {
+                                        startActivity(Intent(this, HomeActivity::class.java))
+                                        finish()
+                                    }
+                                    else {
+                                        Toast.makeText(this, "Failed fill profile", Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+
+                            } else {
+                                Toast.makeText(this, "Failed registration", Toast.LENGTH_SHORT).show()
+                            }
                         }
                     }
-
-                } else {
-                    Toast.makeText(this, "Failed registration", Toast.LENGTH_SHORT).show()
+                    else {
+                        Toast.makeText(this, "Email already exists", Toast.LENGTH_SHORT).show()
+                    }
                 }
             }
+
         }
         else {
             Toast.makeText(this, "Please fill email and password", Toast.LENGTH_SHORT).show()
