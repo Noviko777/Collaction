@@ -68,9 +68,8 @@
         android:id="@+id/cropImageView"
         android:layout_width="match_parent"
         android:layout_height="0dp"
-        custom:cropMaxZoom="3"
-        custom:cropMinCropWindowHeight="200dp"
-        custom:cropMinCropWindowWidth="200dp"
+        custom:cropMinCropWindowHeight="100dp"
+        custom:cropMinCropWindowWidth="100dp"
         custom:layout_constraintTop_toBottomOf="@id/action_bar"
         custom:layout_constraintBottom_toBottomOf="parent"/>
 </androidx.constraintlayout.widget.ConstraintLayout>

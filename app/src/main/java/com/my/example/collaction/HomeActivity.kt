@@ -3,14 +3,16 @@ package com.my.example.collaction
 import android.app.Activity
 import android.content.Context
 import android.content.Intent
+import android.content.pm.PackageManager
 import android.net.Uri
 import android.os.Bundle
-import android.os.Environment
 import android.view.View
 import android.view.WindowManager
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.app.ActivityCompat
+import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
@@ -20,21 +22,27 @@ import com.google.firebase.storage.StorageReference
 import com.my.example.collaction.fragments.*
 import com.my.example.collaction.interfaces.BaseFragmentListener
 import com.my.example.collaction.interfaces.BaseOnClickListener
+import com.my.example.collaction.interfaces.HomeListener
 import com.my.example.collaction.models.User
+import com.my.example.collaction.utilis.ImagesGallery
 import com.my.example.collaction.views.PasswordDialog
-import com.theartofdev.edmodo.cropper.CropImage
 import kotlinx.android.synthetic.main.activity_home.*
 import net.yslibrary.android.keyboardvisibilityevent.KeyboardVisibilityEvent
 import net.yslibrary.android.keyboardvisibilityevent.KeyboardVisibilityEventListener
-import java.io.File
 import java.text.SimpleDateFormat
 import java.util.*
+import kotlin.collections.ArrayList
 
 
-class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListener,EditProfileFragment.Listener, KeyboardVisibilityEventListener, PasswordDialog.Listener {
+class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListener,
+    EditProfileFragment.Listener, KeyboardVisibilityEventListener, PasswordDialog.Listener,
+        ShareFragment.Listener, HomeListener{
 
     private val TAKE_PICTURE_REQUEST_CODE: Int = 111
     private val CROP_PICTURE_REQUEST_CODE: Int = 112
+    private val MY_READ_PERMISSION_CODE: Int = 101
+
+
     private lateinit var mImageUri: Uri
     private lateinit var mAuth: FirebaseAuth
     private lateinit var mStorage: StorageReference
@@ -45,6 +53,10 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
 
     private val simpleDateFormat = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US)
     private lateinit var mCallback: (photo: String?) -> Unit
+    private lateinit var mReloadPhotoCallback: () -> Unit
+
+
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -188,36 +200,6 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
                 intent = Intent(this, CropImageActivity::class.java)
                 intent.putExtra("imageUri", data!!.data!!.toString())
                 startActivityForResult(intent, CROP_PICTURE_REQUEST_CODE)
-       //         val result = CropImage.getActivityResult(data)
-//                if (resultCode === Activity.RESULT_OK) {
-//                    val resultUri = result.uri
-//                } else if (resultCode === CropImage.CROP_IMAGE_ACTIVITY_RESULT_ERROR_CODE) {
-//                    val error = result.error
-//                }
-//                CropImage.activity(data!!.data!!)
-//                    .start(this)
-//                mStorage.child("users/$uid/photo").putFile(data!!.data!!).addOnCompleteListener {
-//                    if(it.isSuccessful) {
-//                        it.result!!.metadata!!.reference!!.downloadUrl.addOnCompleteListener {
-//                            if(it.isSuccessful) {
-//                                val photo = it.result.toString()
-//                                mDatabase.child("users/$uid/photo").setValue(it.result.toString()).addOnCompleteListener {
-//                                    if(it.isSuccessful) {
-//                                        mCallback(photo)
-//                                        Toast.makeText(this, "Saved image", Toast.LENGTH_SHORT).show()
-//                                    }
-//                                    else {
-//                                        Toast.makeText(this, it.exception!!.message, Toast.LENGTH_SHORT).show()
-//                                    }
-//                                }
-//                            }
-//                        }
-//
-//                    }
-//                    else {
-//                        Toast.makeText(this, it.exception!!.message, Toast.LENGTH_SHORT).show()
-//                    }
-//                }
             }
             else if(requestCode == CROP_PICTURE_REQUEST_CODE) {
                 val uid = mAuth.currentUser!!.uid
@@ -249,13 +231,6 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
         }
     }
 
-    private fun createImageFile(): File {
-        val storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES)
-        return File.createTempFile("JPEG_${simpleDateFormat.format(Date())}",
-                ".jpg",
-                storageDir)
-    }
-
     private fun validateUser(user: User): String? =
         when {
             user.name.isEmpty() -> "Fill name please"
@@ -263,6 +238,8 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
             user.email.isEmpty() -> "Fill email please"
             else -> null
         }
+
+
 
     private fun updateUser(user: User) {
         val updatesMap = mutableMapOf<String, Any>()
@@ -318,6 +295,41 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
     override fun popFragment() {
         supportFragmentManager.popBackStack()
     }
+
+
+    private fun checkGalleryPermissions(): Boolean {
+        if(ContextCompat.checkSelfPermission(this, android.Manifest.permission.READ_EXTERNAL_STORAGE) != PackageManager.PERMISSION_GRANTED) {
+            ActivityCompat.requestPermissions(this, arrayOf(android.Manifest.permission.READ_EXTERNAL_STORAGE), MY_READ_PERMISSION_CODE)
+            return false
+        }
+        return true
+    }
+
+    override fun onRequestPermissionsResult(
+        requestCode: Int,
+        permissions: Array<out String>,
+        grantResults: IntArray
+    ) {
+        super.onRequestPermissionsResult(requestCode, permissions, grantResults)
+        if(requestCode == MY_READ_PERMISSION_CODE) {
+            if(grantResults[0] == PackageManager.PERMISSION_GRANTED) {
+                Toast.makeText(this, "Read external storage permission granted", Toast.LENGTH_SHORT).show()
+                mReloadPhotoCallback()
+            } else {
+                Toast.makeText(this, "Read external storage permission denied", Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    override fun getGalleryImages(tryRequest: () -> Unit): List<String> {
+        if(checkGalleryPermissions()) {
+            return ImagesGallery.listOfImages(this)
+        }
+        mReloadPhotoCallback = tryRequest
+
+        return ArrayList<String>()
+    }
+
 
 
 }
