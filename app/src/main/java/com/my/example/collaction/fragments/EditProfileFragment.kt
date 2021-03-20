@@ -1,13 +1,18 @@
 package com.my.example.collaction.fragments
 
+import android.app.Activity
 import android.content.Context
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.Button
+import android.widget.ImageButton
 import android.widget.ImageView
+import android.widget.ScrollView
 import com.my.example.collaction.R
+import com.my.example.collaction.interfaces.BaseFragmentListener
 import com.my.example.collaction.interfaces.BaseOnClickListener
 import com.my.example.collaction.models.User
 import kotlinx.android.synthetic.main.fragment_edit_profile.view.*
@@ -17,11 +22,13 @@ import kotlinx.android.synthetic.main.fragment_register_name.view.*
 class EditProfileFragment : Fragment() {
 
     private lateinit var baseOnClickListener: BaseOnClickListener
+    private lateinit var baseFragmentListener: BaseFragmentListener
     private lateinit var listener: Listener
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
         baseOnClickListener = context as BaseOnClickListener
+        baseFragmentListener = context as BaseFragmentListener
         listener = context as Listener
     }
 
@@ -50,6 +57,9 @@ class EditProfileFragment : Fragment() {
         view.email_edit_text.setText(user.email)
         view.phone_edit_text.setText(user.phone)
 
+        view.findViewById<ImageView>(R.id.cancelImageView).setOnClickListener {
+            baseFragmentListener.popFragment()
+        }
         view.findViewById<ImageView>(R.id.save_image_view).setOnClickListener {
             val user = User(name = view.name_edit_text.text.toString(),
                     username = view.username_edit_text.text.toString(),
@@ -60,11 +70,15 @@ class EditProfileFragment : Fragment() {
 
             listener.updateProfile(user)
         }
+        view.findViewById<View>(R.id.profileImageLayout).setOnClickListener {
+            listener.loadPhoto()
+        }
 
     }
 
     interface Listener {
         fun updateProfile(user: User)
+        fun loadPhoto()
     }
 
 }

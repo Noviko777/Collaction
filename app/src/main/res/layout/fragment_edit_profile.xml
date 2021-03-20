@@ -10,7 +10,7 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.15"/>
+        app:layout_constraintGuide_begin="100dp"/>
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideTopBar"
@@ -39,67 +39,14 @@
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toTopOf="parent"
         app:layout_constraintBottom_toBottomOf="@id/guideProfileBackground"/>
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="@id/guideTopBar">
-        <androidx.constraintlayout.widget.Guideline
-            android:id="@+id/guideSettings"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            app:layout_constraintGuide_percent="0.12"/>
-        <androidx.constraintlayout.widget.Guideline
-            android:id="@+id/guideMenu"
-            android:layout_width="wrap_content"
-            android:layout_height="wrap_content"
-            android:orientation="vertical"
-            app:layout_constraintGuide_percent="0.88"/>
 
-
-        <ImageView
-            android:id="@+id/cancelImageView"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:padding="8dp"
-            android:src="@drawable/ic_cancel"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="@id/guideSettings"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"/>
-        <TextView
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:text="Edit Profile"
-            android:textColor="@color/white"
-            android:textSize="24sp"
-
-            android:textStyle="bold"
-            android:gravity="center"
-            android:textAlignment="center"
-            app:layout_constraintStart_toEndOf="@id/cancelImageView"
-            app:layout_constraintEnd_toStartOf="@id/save_image_view"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintTop_toTopOf="parent"/>
-        <ImageView
-            android:id="@+id/save_image_view"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:padding="8dp"
-            android:src="@drawable/ic_save"
-            app:layout_constraintStart_toStartOf="@id/guideMenu"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"/>
-    </androidx.constraintlayout.widget.ConstraintLayout>
 
     <ScrollView
+        android:id="@+id/scroll_view"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:paddingTop="35dp"
+        android:clickable="false"
         android:background="@drawable/main_panel_background"
 
         app:layout_constraintStart_toStartOf="parent"
@@ -112,16 +59,35 @@
             android:paddingBottom="16dp"
             android:orientation="vertical"
             android:gravity="center_horizontal">
-            <com.rishabhharit.roundedimageview.RoundedImageView
-                android:id="@+id/profileImageView"
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:id="@+id/profileImageLayout"
                 android:layout_width="92dp"
                 android:layout_height="92dp"
                 android:layout_marginTop="20dp"
-                app:cornerRadius="16dp"
-                android:src="@drawable/profile"
                 app:layout_constraintStart_toStartOf="parent"
                 app:layout_constraintEnd_toEndOf="parent"
-                app:layout_constraintTop_toTopOf="parent"/>
+                app:layout_constraintTop_toTopOf="parent">
+                <com.rishabhharit.roundedimageview.RoundedImageView
+                    android:id="@+id/profileImageView"
+                    android:layout_width="match_parent"
+                    android:layout_height="match_parent"
+                    app:cornerRadius="16dp"
+                    android:src="@drawable/profile"
+                    />
+                <TextView
+                    android:layout_width="0dp"
+                    android:layout_height="24dp"
+                    android:text="Change"
+                    android:textColor="@color/white"
+                    android:textStyle="bold"
+                    android:gravity="center"
+                    android:background="@drawable/change_image_background"
+                    app:layout_constraintBottom_toBottomOf="@id/profileImageView"
+                    app:layout_constraintStart_toStartOf="@id/profileImageView"
+                    app:layout_constraintEnd_toEndOf="@id/profileImageView"/>
+            </androidx.constraintlayout.widget.ConstraintLayout>
+
+
             <TextView
                 android:layout_width="match_parent"
                 android:layout_height="wrap_content"
@@ -198,5 +164,60 @@
                 style="@style/editTextStyle"/>
         </LinearLayout>
     </ScrollView>
+    <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/action_bar"
+        android:layout_width="0dp"
+        android:layout_height="50dp"
+        app:layout_constraintStart_toStartOf="parent"
+        app:layout_constraintEnd_toEndOf="parent"
+        app:layout_constraintTop_toTopOf="parent">
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guideSettings"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_begin="50dp"/>
+        <androidx.constraintlayout.widget.Guideline
+            android:id="@+id/guideMenu"
+            android:layout_width="wrap_content"
+            android:layout_height="wrap_content"
+            android:orientation="vertical"
+            app:layout_constraintGuide_end="50dp"/>
 
+
+        <ImageView
+            android:id="@+id/cancelImageView"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:padding="8dp"
+            android:src="@drawable/ic_cancel"
+            app:layout_constraintStart_toStartOf="parent"
+            app:layout_constraintEnd_toEndOf="@id/guideSettings"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+        <TextView
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:text="Edit Profile"
+            android:textColor="@color/white"
+            android:textSize="24sp"
+
+            android:textStyle="bold"
+            android:gravity="center"
+            android:textAlignment="center"
+            app:layout_constraintStart_toEndOf="@id/cancelImageView"
+            app:layout_constraintEnd_toStartOf="@id/save_image_view"
+            app:layout_constraintBottom_toBottomOf="parent"
+            app:layout_constraintTop_toTopOf="parent"/>
+        <ImageView
+            android:id="@+id/save_image_view"
+            android:layout_width="0dp"
+            android:layout_height="0dp"
+            android:padding="8dp"
+            android:src="@drawable/ic_save"
+            app:layout_constraintStart_toStartOf="@id/guideMenu"
+            app:layout_constraintEnd_toEndOf="parent"
+            app:layout_constraintTop_toTopOf="parent"
+            app:layout_constraintBottom_toBottomOf="parent"/>
+    </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

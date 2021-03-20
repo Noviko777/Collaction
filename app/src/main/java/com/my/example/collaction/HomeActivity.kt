@@ -1,28 +1,49 @@
 package com.my.example.collaction
 
+import android.app.Activity
+import android.content.Context
 import android.content.Intent
+import android.net.Uri
 import android.os.Bundle
+import android.os.Environment
+import android.provider.MediaStore
 import android.view.View
 import android.view.WindowManager
+import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
+import androidx.core.content.FileProvider
 import androidx.fragment.app.Fragment
+import com.google.firebase.auth.EmailAuthProvider
 import com.google.firebase.auth.FirebaseAuth
 import com.google.firebase.database.*
+import com.google.firebase.storage.FirebaseStorage
+import com.google.firebase.storage.StorageReference
 import com.my.example.collaction.fragments.*
+import com.my.example.collaction.interfaces.BaseFragmentListener
 import com.my.example.collaction.interfaces.BaseOnClickListener
 import com.my.example.collaction.models.User
+import com.my.example.collaction.views.PasswordDialog
 import kotlinx.android.synthetic.main.activity_home.*
 import net.yslibrary.android.keyboardvisibilityevent.KeyboardVisibilityEvent
 import net.yslibrary.android.keyboardvisibilityevent.KeyboardVisibilityEventListener
+import java.io.File
+import java.text.SimpleDateFormat
+import java.util.*
 
 
-class HomeActivity : AppCompatActivity(), BaseOnClickListener, EditProfileFragment.Listener, KeyboardVisibilityEventListener {
+class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListener,EditProfileFragment.Listener, KeyboardVisibilityEventListener, PasswordDialog.Listener {
 
+    private val TAKE_PICTURE_REQUEST_CODE: Int = 111
+    private lateinit var mImageUri: Uri
     private lateinit var mAuth: FirebaseAuth
+    private lateinit var mStorage: StorageReference
     private lateinit var mDatabase: DatabaseReference
 
     private lateinit var mUser: User
+    private lateinit var mPendingUser: User
+
+    private val simpleDateFormat = SimpleDateFormat("yyyyMMdd_HHmmss", Locale.US)
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
@@ -32,6 +53,7 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, EditProfileFragme
         KeyboardVisibilityEvent.setEventListener(this, this)
 
         mAuth = FirebaseAuth.getInstance()
+        mStorage = FirebaseStorage.getInstance().reference
         mAuth.addAuthStateListener {
             if(it.currentUser == null) {
                 startActivity(Intent(this, LoginActivity::class.java))
@@ -67,6 +89,16 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, EditProfileFragme
 
     fun openOtherFragment(fragment: Fragment) {
         supportFragmentManager.beginTransaction().replace(R.id.fragment, fragment).addToBackStack(null).commit()
+    }
+
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        val decorView = window.decorView
+        if (hasFocus) {
+            decorView.systemUiVisibility = (
+                    View.SYSTEM_UI_FLAG_LAYOUT_STABLE
+                            or View.SYSTEM_UI_FLAG_IMMERSIVE_STICKY)
+        }
     }
 
     private fun initBottomNavBar() {
@@ -108,33 +140,74 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, EditProfileFragme
     override fun updateProfile(user: User) {
         val error = validateUser(user)
         if(error == null) {
-            if(user.email == mUser.email) {
-                val updatesMap = mutableMapOf<String, Any>()
-                if(user.name != mUser.name) updatesMap["name"] = user.name
-                if(user.username != mUser.username) updatesMap["username"] = user.username
-                if(user.website != mUser.website) updatesMap["website"] = user.website
-                if(user.bio != mUser.bio) updatesMap["bio"] = user.bio
-                if(user.email != mUser.email) updatesMap["email"] = user.email
-                if(user.phone != mUser.phone) updatesMap["phone"] = user.phone
-
-                mDatabase.child("users").child(mAuth.currentUser.uid).updateChildren(updatesMap).addOnCompleteListener {
-                    if(it.isSuccessful) {
-                        Toast.makeText(this, "Profile saved", Toast.LENGTH_SHORT).show()
-                        supportFragmentManager.popBackStack()
-                    }
-                    else {
-                        Toast.makeText(this, it.exception!!.message, Toast.LENGTH_SHORT).show()
-                    }
-                }
+            mPendingUser = user
+            if(mPendingUser.email == mUser.email) {
+                updateUser(mPendingUser)
             }
             else {
-
+                val view = this.currentFocus
+                if (view != null) {
+                    val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                    imm.hideSoftInputFromWindow(view.windowToken, 0)
+                }
+                PasswordDialog().show(supportFragmentManager, "password_dialog")
             }
         }
         else {
             Toast.makeText(this, error, Toast.LENGTH_SHORT).show()
         }
 
+    }
+
+    override fun loadPhoto() {
+        takeCameraPictire()
+    }
+
+    private fun takeCameraPictire() {
+        val intent = Intent(MediaStore.ACTION_IMAGE_CAPTURE)
+        if(intent.resolveActivity(packageManager) != null) {
+            val imageFile = createImageFile()
+            mImageUri = FileProvider.getUriForFile(this, "com.my.example.collaction.fileprovider",
+            imageFile)
+            intent.putExtra(MediaStore.EXTRA_OUTPUT, mImageUri)
+            startActivityForResult(intent, TAKE_PICTURE_REQUEST_CODE)
+        }
+    }
+
+    override fun onActivityResult(requestCode: Int, resultCode: Int, data: Intent?) {
+        super.onActivityResult(requestCode, resultCode, data)
+        if(resultCode == Activity.RESULT_OK) {
+            if(requestCode == TAKE_PICTURE_REQUEST_CODE) {
+                val uid = mAuth.currentUser!!.uid
+                mStorage.child("users/$uid/photo").putFile(mImageUri).addOnCompleteListener {
+                    if(it.isSuccessful) {
+                        it.result!!.metadata!!.reference!!.downloadUrl.addOnCompleteListener {
+                            if(it.isSuccessful) {
+                                mDatabase.child("users/$uid/photo").setValue(it.result.toString()).addOnCompleteListener {
+                                    if(it.isSuccessful) {
+                                        Toast.makeText(this, "Saved image", Toast.LENGTH_SHORT).show()
+                                    }
+                                    else {
+                                        Toast.makeText(this, it.exception!!.message, Toast.LENGTH_SHORT).show()
+                                    }
+                                }
+                            }
+                        }
+
+                    }
+                    else {
+                        Toast.makeText(this, it.exception!!.message, Toast.LENGTH_SHORT).show()
+                    }
+                }
+            }
+        }
+    }
+
+    private fun createImageFile(): File {
+        val storageDir = getExternalFilesDir(Environment.DIRECTORY_PICTURES)
+        return File.createTempFile("JPEG_${simpleDateFormat.format(Date())}",
+                ".jpg",
+                storageDir)
     }
 
     private fun validateUser(user: User): String? =
@@ -145,6 +218,26 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, EditProfileFragme
             else -> null
         }
 
+    private fun updateUser(user: User) {
+        val updatesMap = mutableMapOf<String, Any>()
+        if(user.name != mUser.name) updatesMap["name"] = user.name
+        if(user.username != mUser.username) updatesMap["username"] = user.username
+        if(user.website != mUser.website) updatesMap["website"] = user.website
+        if(user.bio != mUser.bio) updatesMap["bio"] = user.bio
+        if(user.email != mUser.email) updatesMap["email"] = user.email
+        if(user.phone != mUser.phone) updatesMap["phone"] = user.phone
+
+        mDatabase.child("users").child(mAuth.currentUser!!.uid).updateChildren(updatesMap).addOnCompleteListener {
+            if(it.isSuccessful) {
+                Toast.makeText(this, "Profile saved", Toast.LENGTH_SHORT).show()
+                supportFragmentManager.popBackStack()
+            }
+            else {
+                Toast.makeText(this, it.exception!!.message, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
     override fun onVisibilityChanged(isOpen: Boolean) {
         if(isOpen) {
             bottom_nav_view.visibility = View.GONE
@@ -153,5 +246,32 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, EditProfileFragme
             bottom_nav_view.visibility = View.VISIBLE
         }
     }
+
+    override fun onConfirmPassword(password: String) {
+        if(!password.isNullOrEmpty()) {
+            val credential = EmailAuthProvider.getCredential(mUser.email, password)
+            mAuth.currentUser!!.reauthenticate(credential).addOnCompleteListener {
+                if(it.isSuccessful) {
+                    mAuth.currentUser!!.updateEmail(mPendingUser.email).addOnCompleteListener {
+                        if(it.isSuccessful) {
+                            updateUser(mPendingUser)
+                        }
+                        else {
+                            Toast.makeText(this, it.exception!!.message, Toast.LENGTH_SHORT).show()
+                        }
+                    }
+                }
+                else {
+                    Toast.makeText(this, it.exception!!.message, Toast.LENGTH_SHORT).show()
+                }
+            }
+        }
+
+    }
+
+    override fun popFragment() {
+        supportFragmentManager.popBackStack()
+    }
+
 
 }
