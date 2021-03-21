@@ -63,33 +63,48 @@
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"/>
     </androidx.constraintlayout.widget.ConstraintLayout>
-    <androidx.constraintlayout.widget.ConstraintLayout
+    <androidx.coordinatorlayout.widget.CoordinatorLayout
         android:layout_width="0dp"
         android:layout_height="0dp"
+        android:orientation="vertical"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@id/action_bar"
         app:layout_constraintBottom_toBottomOf="parent">
-        <com.theartofdev.edmodo.cropper.CropImageView
-            xmlns:custom="http://schemas.android.com/apk/res-auto"
-            android:id="@+id/cropImageView"
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-
-            custom:cropMinCropWindowHeight="100dp"
-            custom:cropMinCropWindowWidth="100dp"
-            custom:cropAspectRatioX="4"
-            custom:cropAspectRatioY="3"
-            custom:layout_constraintStart_toStartOf="parent"
-            custom:layout_constraintEnd_toEndOf="parent"
-            custom:layout_constraintTop_toTopOf="parent"
-            custom:layout_constraintDimensionRatio="H, 4:3.5"/>
         <androidx.recyclerview.widget.RecyclerView
+            android:tag="recycler"
             android:id="@+id/recyclerview_gallery_images"
-            android:layout_width="0dp"
+            android:layout_width="match_parent"
+            android:layout_height="match_parent"
+            app:layout_behavior="com.google.android.material.appbar.AppBarLayout$ScrollingViewBehavior"/>
+        <com.google.android.material.appbar.AppBarLayout
+            android:tag="appbar"
+            android:id="@+id/cropLayout"
+            android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            app:layout_constraintStart_toStartOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toBottomOf="@id/cropImageView"/>
-    </androidx.constraintlayout.widget.ConstraintLayout>
+            android:background="@null"
+            app:layout_behavior=".utilis.QuickHideBehavior">
+            <androidx.constraintlayout.widget.ConstraintLayout
+                android:layout_width="match_parent"
+                android:layout_height="wrap_content"
+                android:background="@null"
+                >
+                <com.theartofdev.edmodo.cropper.CropImageView
+                    xmlns:custom="http://schemas.android.com/apk/res-auto"
+                    android:id="@+id/cropImageView"
+                    android:layout_width="0dp"
+                    android:layout_height="0dp"
+                    custom:cropMinCropWindowHeight="100dp"
+                    custom:cropMinCropWindowWidth="100dp"
+                    custom:cropAspectRatioX="4"
+                    custom:cropAspectRatioY="3"
+                    android:translationZ="5dp"
+                    custom:layout_constraintStart_toStartOf="parent"
+                    custom:layout_constraintEnd_toEndOf="parent"
+                    custom:layout_constraintTop_toTopOf="parent"
+                    custom:layout_constraintDimensionRatio="H, 4:3.5"/>
+            </androidx.constraintlayout.widget.ConstraintLayout>
+        </com.google.android.material.appbar.AppBarLayout>
+
+    </androidx.coordinatorlayout.widget.CoordinatorLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

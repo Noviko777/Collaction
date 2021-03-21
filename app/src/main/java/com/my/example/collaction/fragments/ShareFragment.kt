@@ -8,12 +8,16 @@ import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
+import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
+import com.google.android.material.appbar.AppBarLayout
 import com.my.example.collaction.R
 import com.my.example.collaction.adapters.GalleryAdapter
 import com.my.example.collaction.interfaces.HomeListener
+import com.my.example.collaction.utilis.CropHideBehavior
 import com.theartofdev.edmodo.cropper.CropImageView
+import kotlinx.android.synthetic.main.fragment_share.*
 import java.io.File
 
 
@@ -54,6 +58,8 @@ class ShareFragment : Fragment() {
 
         shareGalleryAdapter = GalleryAdapter(context!!, images, object  : GalleryAdapter.PhotoListener{
             override fun onPhotoClick(image: String) {
+//                val params: CoordinatorLayout.LayoutParams = cropLayout.layoutParams as CoordinatorLayout.LayoutParams
+//                (params.behavior as CropHideBehavior).show(cropLayout)
                view.findViewById<CropImageView>(R.id.cropImageView).setImageUriAsync(Uri.fromFile(File(image)))
              //   view.findViewById<CropImageView>(R.id.cropImageView).scaleType = CropImageView.ScaleType.CENTER_CROP
             }
