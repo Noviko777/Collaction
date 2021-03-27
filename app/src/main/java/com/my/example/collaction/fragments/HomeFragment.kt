@@ -6,18 +6,27 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import androidx.recyclerview.widget.LinearLayoutManager
+import androidx.recyclerview.widget.RecyclerView
 import com.my.example.collaction.R
+import com.my.example.collaction.adapters.FeedPostAdapter
 import com.my.example.collaction.interfaces.BaseOnClickListener
+import com.my.example.collaction.interfaces.HomeListener
 import kotlinx.android.synthetic.main.fragment_home.view.*
 
 
 class HomeFragment : Fragment() {
 
     lateinit var baseOnClickListener: BaseOnClickListener
+    lateinit var homeListener: HomeListener
+
+    private lateinit var feedPostRecyclerView: RecyclerView
+    private lateinit var feedPostAdapter: FeedPostAdapter
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
         baseOnClickListener = context as BaseOnClickListener
+        homeListener = context as HomeListener
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -37,11 +46,17 @@ class HomeFragment : Fragment() {
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
-
-        view.home_text.setOnClickListener {
-            baseOnClickListener.signOut()
-        }
         super.onViewCreated(view, savedInstanceState)
+
+        feedPostRecyclerView = view.findViewById(R.id.posts_recyclerView)
+        feedPostRecyclerView.setHasFixedSize(true)
+        feedPostRecyclerView.layoutManager = LinearLayoutManager(context)
+        homeListener.getAllFeedPosts() {
+            feedPostAdapter = FeedPostAdapter(context!!,it)
+            feedPostRecyclerView.adapter = feedPostAdapter
+        }
+
+
     }
 
 }

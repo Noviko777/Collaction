@@ -1,14 +1,12 @@
 package com.my.example.collaction.fragments
 
 import android.content.Context
-import android.net.Uri
 import android.os.Bundle
 import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
 import android.widget.TextView
-import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.recyclerview.widget.GridLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
@@ -17,11 +15,7 @@ import com.my.example.collaction.R
 import com.my.example.collaction.adapters.GalleryAdapter
 import com.my.example.collaction.interfaces.BaseOnClickListener
 import com.my.example.collaction.interfaces.HomeListener
-import com.my.example.collaction.utilis.QuickHideBehavior
-import com.theartofdev.edmodo.cropper.CropImageView
 import kotlinx.android.synthetic.main.fragment_profile.view.*
-import kotlinx.android.synthetic.main.fragment_share.*
-import java.io.File
 
 
 class ProfileFragment : Fragment() {
@@ -63,7 +57,7 @@ class ProfileFragment : Fragment() {
 
         recyclerView.setHasFixedSize(true)
         recyclerView.layoutManager = GridLayoutManager(context, 3)
-        galleryAdapter = GalleryAdapter(context!!, homeListener.getPosts(), object  : GalleryAdapter.PhotoListener{
+        galleryAdapter = GalleryAdapter(context!!, homeListener.getUserPosts(), object  : GalleryAdapter.PhotoListener{
             override fun onPhotoClick(image: String) {
             }
 

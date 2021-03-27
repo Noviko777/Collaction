@@ -23,6 +23,7 @@ import com.my.example.collaction.fragments.*
 import com.my.example.collaction.interfaces.BaseFragmentListener
 import com.my.example.collaction.interfaces.BaseOnClickListener
 import com.my.example.collaction.interfaces.HomeListener
+import com.my.example.collaction.models.FeedPost
 import com.my.example.collaction.models.User
 import com.my.example.collaction.utilis.FirebaseHelper
 import com.my.example.collaction.utilis.ImagesGallery
@@ -48,8 +49,10 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
     private lateinit var mUser: User
     private lateinit var mPendingUser: User
     private lateinit var mPosts: List<String>
+    private var mFeedPosts: List<FeedPost>? = null
 
     private lateinit var mCallback: (photo: String?) -> Unit
+    private lateinit var mFeedPostsCallback: (posts: List<FeedPost>) -> Unit
     private lateinit var mReloadPhotoCallback: () -> Unit
 
     private lateinit var mPostBitmap: Bitmap
@@ -89,6 +92,19 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
                 override fun onDataChange(snapshot: DataSnapshot) {
                     mPosts = snapshot.children.map { it.getValue(String::class.java)!! }
 
+                }
+
+            })
+            mFirebase.database.child("feed-posts").child(mFirebase.auth.currentUser!!.uid).addValueEventListener(object : ValueEventListener {
+                override fun onCancelled(error: DatabaseError) {
+
+                }
+
+                override fun onDataChange(snapshot: DataSnapshot) {
+                    mFeedPosts = snapshot.children.map { it.getValue(FeedPost::class.java)!! }
+                    if(mFeedPostsCallback != null) {
+                        mFeedPostsCallback(mFeedPosts!!)
+                    }
                 }
 
             })
@@ -307,7 +323,13 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
         return ArrayList<String>()
     }
 
-    override fun getPosts(): List<String> = mPosts
+    override fun getUserPosts(): List<String> = mPosts
+    override fun getAllFeedPosts(postsCallBack: (List<FeedPost>) -> Unit) {
+        mFeedPostsCallback = postsCallBack
+        if(mFeedPosts != null) {
+            mFeedPostsCallback(mFeedPosts!!)
+        }
+    }
 
     override fun openPostFragment(bitmap: Bitmap) {
         mPostBitmap = bitmap
@@ -316,19 +338,26 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
 
     override fun getPostBitmap(): Bitmap = mPostBitmap
 
-    override fun shareImage() {
+    override fun shareImage(caption: String) {
         val photoUri = getImageUri(this, mPostBitmap)
         val uid = mFirebase.auth.currentUser!!.uid
         mFirebase.storage.child("users").child(uid)
                 .child("images").child(photoUri!!.lastPathSegment!!).putFile(photoUri).addOnCompleteListener {
+                    contentResolver.delete(photoUri, null, null)
                     if(it.isSuccessful) {
                         it.result!!.metadata!!.reference!!.downloadUrl.addOnCompleteListener {
                             if(it.isSuccessful) {
+                                val photoUrl = it.result.toString()
                                 mFirebase.database.child("images").child(uid).push()
-                                        .setValue(it.result.toString()).addOnCompleteListener {
-                                            contentResolver.delete(photoUri, null, null)
-                                            supportFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-                                            supportFragmentManager.beginTransaction().replace(R.id.fragment, ProfileFragment()).commit()
+                                        .setValue(photoUrl).addOnCompleteListener {
+                                            mFirebase.database.child("feed-posts").child(uid).push()
+                                                    .setValue(FeedPost(uid = uid, username = mUser.username, photo = mUser.photo,
+                                                    image = photoUrl, caption = caption)).addOnCompleteListener {
+                                                        if(it.isSuccessful) {
+                                                            supportFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+                                                            supportFragmentManager.beginTransaction().replace(R.id.fragment, ProfileFragment()).commit()
+                                                        }
+                                                    }
                                         }
                             }
                             else {

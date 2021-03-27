@@ -8,6 +8,7 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.EditText
 import android.widget.ImageView
 import android.widget.Toast
 import androidx.coordinatorlayout.widget.CoordinatorLayout
@@ -59,13 +60,13 @@ class PublishPostFragment : Fragment() {
             mBaseListener.popFragment()
         }
         view.findViewById<View>(R.id.save_image_view).setOnClickListener {
-            mListener.shareImage()
+            mListener.shareImage(view.findViewById<EditText>(R.id.caption_text).text.toString())
         }
     }
 
     interface Listener {
        // fun getGalleryImages(getImages: (x: List<String>) -> Unit)
         fun getPostBitmap(): Bitmap
-        fun shareImage()
+        fun shareImage(caption: String)
     }
 }

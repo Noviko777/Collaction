@@ -43,7 +43,7 @@ class GalleryAdapter : RecyclerView.Adapter<GalleryAdapter.ViewHolder> {
     }
 
     class ViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        var image: RoundedImageView? = null
+        val image: RoundedImageView?
 
         init {
             image = itemView?.findViewById(R.id.image)

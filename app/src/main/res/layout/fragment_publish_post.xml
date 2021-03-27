@@ -74,7 +74,7 @@
         app:layout_constraintDimensionRatio="H, 4:3"/>
 
     <EditText
-        android:id="@+id/post_text"
+        android:id="@+id/caption_text"
         android:layout_width="0dp"
         android:layout_height="0dp"
         android:layout_margin="16dp"
