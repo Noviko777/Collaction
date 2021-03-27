@@ -8,6 +8,7 @@ import androidx.fragment.app.Fragment
 import android.view.LayoutInflater
 import android.view.View
 import android.view.ViewGroup
+import android.widget.ImageView
 import android.widget.Toast
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.recyclerview.widget.GridLayoutManager
@@ -15,6 +16,7 @@ import androidx.recyclerview.widget.RecyclerView
 import com.google.android.material.appbar.AppBarLayout
 import com.my.example.collaction.R
 import com.my.example.collaction.adapters.GalleryAdapter
+import com.my.example.collaction.interfaces.BaseFragmentListener
 import com.my.example.collaction.interfaces.HomeListener
 import com.my.example.collaction.utilis.CropHideBehavior
 import com.my.example.collaction.utilis.QuickHideBehavior
@@ -23,25 +25,22 @@ import kotlinx.android.synthetic.main.fragment_share.*
 import java.io.File
 
 
-class ShareFragment : Fragment() {
+class PublishPostFragment : Fragment() {
 
     private lateinit var mHomeListener: HomeListener
+    private lateinit var mBaseListener: BaseFragmentListener
     private lateinit var mListener: Listener
 
-    private lateinit var shareRecyclerView: RecyclerView
-    private lateinit var shareGalleryAdapter: GalleryAdapter
-
-    private lateinit var images: List<String>
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
         mHomeListener = context as HomeListener
+        mBaseListener = context as BaseFragmentListener
         mListener = context as Listener
     }
 
     override fun onCreate(savedInstanceState: Bundle?) {
         super.onCreate(savedInstanceState)
-        images = mHomeListener.getGalleryImages { mHomeListener.getGalleryImages {} }
     }
 
     override fun onCreateView(
@@ -50,34 +49,23 @@ class ShareFragment : Fragment() {
     ): View?
     {
 
-        return inflater.inflate(R.layout.fragment_share, container, false)
+        return inflater.inflate(R.layout.fragment_publish_post, container, false)
     }
 
     override fun onViewCreated(view: View, savedInstanceState: Bundle?) {
         super.onViewCreated(view, savedInstanceState)
-        shareRecyclerView = view.findViewById(R.id.recyclerview_gallery_images)
-
-        shareRecyclerView.setHasFixedSize(true)
-        shareRecyclerView.layoutManager = GridLayoutManager(context, 3)
-
-        shareGalleryAdapter = GalleryAdapter(context!!, images, object  : GalleryAdapter.PhotoListener{
-            override fun onPhotoClick(image: String) {
-                val params: CoordinatorLayout.LayoutParams = cropLayout.layoutParams as CoordinatorLayout.LayoutParams
-                (params.behavior as QuickHideBehavior).showImage(cropLayout)
-               view.findViewById<CropImageView>(R.id.cropImageView).setImageUriAsync(Uri.fromFile(File(image)))
-             //   view.findViewById<CropImageView>(R.id.cropImageView).scaleType = CropImageView.ScaleType.CENTER_CROP
-            }
-
-        })
-        shareRecyclerView.adapter = shareGalleryAdapter
-        view.findViewById<CropImageView>(R.id.cropImageView).setImageUriAsync(Uri.fromFile(File(images.first())))
+        view.findViewById<ImageView>(R.id.crop_image).setImageBitmap(mListener.getPostBitmap())
+        view.findViewById<View>(R.id.cancel_image_view).setOnClickListener {
+            mBaseListener.popFragment()
+        }
         view.findViewById<View>(R.id.save_image_view).setOnClickListener {
-            mListener.openPostFragment(view.findViewById<CropImageView>(R.id.cropImageView).croppedImage)
+            mListener.shareImage()
         }
     }
 
     interface Listener {
        // fun getGalleryImages(getImages: (x: List<String>) -> Unit)
-       fun openPostFragment(bitmap: Bitmap)
+        fun getPostBitmap(): Bitmap
+        fun shareImage()
     }
 }

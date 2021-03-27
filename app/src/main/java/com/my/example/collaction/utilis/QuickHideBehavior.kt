@@ -1,6 +1,5 @@
 package com.my.example.collaction.utilis
 
-import android.R
 import android.animation.ObjectAnimator
 import android.content.Context
 import android.content.res.TypedArray
@@ -14,11 +13,14 @@ import android.widget.FrameLayout
 import androidx.coordinatorlayout.widget.CoordinatorLayout
 import androidx.core.view.ViewCompat
 import androidx.interpolator.view.animation.FastOutSlowInInterpolator
+import com.my.example.collaction.R
+import com.theartofdev.edmodo.cropper.CropImageView
 
 
 class QuickHideBehavior : CoordinatorLayout.Behavior<View?> {
     /* Tracking direction of user motion */
     private var mScrollingDirection = 0
+    private var mLastDirection = 0
 
     /* Tracking last threshold crossed */
     private var mScrollTrigger = 0
@@ -31,6 +33,7 @@ class QuickHideBehavior : CoordinatorLayout.Behavior<View?> {
     private var mAnimator: ObjectAnimator? = null
     private var isHide = false
     private var isStop = true
+    private var isAnimStop = true
     private var mHeight: Int? = null
 
     //Required to instantiate as a default behavior
@@ -52,7 +55,7 @@ class QuickHideBehavior : CoordinatorLayout.Behavior<View?> {
 
     override fun onNestedPreScroll(coordinatorLayout: CoordinatorLayout, child: View, target: View, dx: Int, dy: Int, consumed: IntArray, type: Int) {
         //Determine direction changes here
-       if(isStop) {
+
            if (dy > 0 && mScrollingDirection != DIRECTION_UP) {
                mScrollingDirection = DIRECTION_UP;
                mScrollDistance = 0;
@@ -60,24 +63,33 @@ class QuickHideBehavior : CoordinatorLayout.Behavior<View?> {
                mScrollingDirection = DIRECTION_DOWN;
                mScrollDistance = 0;
            }
-       }
+        if(mLastDirection != mScrollingDirection && isAnimStop) {
+            isStop = true
+        }
+        if(isAnimStop) {
+            mLastDirection = mScrollingDirection
+        }
+
+
 
     }
 
     override fun onStopNestedScroll(coordinatorLayout: CoordinatorLayout, child: View, target: View, type: Int) {
         super.onStopNestedScroll(coordinatorLayout, child, target, type)
         isStop = true
+        mScrollDistance = 0
     }
 
     override fun onNestedScroll(coordinatorLayout: CoordinatorLayout, child: View, target: View, dxConsumed: Int, dyConsumed: Int, dxUnconsumed: Int, dyUnconsumed: Int, type: Int, consumed: IntArray) {
-        if(isStop) {
+        if(isStop && isAnimStop) {
             mScrollDistance += dyConsumed;
             if (mScrollDistance > mScrollThreshold
                     && mScrollTrigger != DIRECTION_UP) {
                 //Hide the target view
                 mScrollTrigger = DIRECTION_UP;
                 restartAnimator(child, getTargetHideValue(coordinatorLayout, child));
-            } else if (mScrollDistance < -mScrollThreshold
+            }
+            else if (mScrollDistance < -mScrollThreshold * 20
                     && mScrollTrigger != DIRECTION_DOWN) {
                 //Return the target view
                 mScrollTrigger = DIRECTION_DOWN;
@@ -88,19 +100,51 @@ class QuickHideBehavior : CoordinatorLayout.Behavior<View?> {
     }
 
     override fun onNestedFling(coordinatorLayout: CoordinatorLayout, child: View, target: View, velocityX: Float, velocityY: Float, consumed: Boolean): Boolean {
-        if (consumed && isStop) {
+        if (consumed && isStop && isAnimStop) {
             if (velocityY > 0 && mScrollTrigger != DIRECTION_UP) {
                 mScrollTrigger = DIRECTION_UP;
                 restartAnimator(child, getTargetHideValue(coordinatorLayout, child));
-            } else if (velocityY < 0 && mScrollTrigger != DIRECTION_DOWN) {
-                mScrollTrigger = DIRECTION_DOWN;
-                restartAnimator(child, 0f);
             }
+//            else if (velocityY < 0 && mScrollTrigger != DIRECTION_DOWN) {
+//                mScrollTrigger = DIRECTION_DOWN;
+//                restartAnimator(child, 0f);
+//            }
         }
 
         return false;
     }
 
+    fun showImage(target: View) {
+        if(isHide && isAnimStop) {
+
+            mScrollingDirection = DIRECTION_DOWN
+            mLastDirection = DIRECTION_DOWN
+            mScrollTrigger = DIRECTION_DOWN
+            isHide = false
+            val anim = ResizeHeightAnimation(target, mHeight!!)
+            anim.duration = 500
+            anim.interpolator = FastOutSlowInInterpolator()
+            anim.setAnimationListener(object : Animation.AnimationListener {
+                override fun onAnimationRepeat(animation: Animation?) {
+
+                }
+
+                override fun onAnimationEnd(animation: Animation?) {
+                    (target.parent as CoordinatorLayout).findViewById<CropImageView>(R.id.cropImageView).setImageUriAsync((target.parent as CoordinatorLayout).findViewById<CropImageView>(R.id.cropImageView).imageUri)
+                    ObjectAnimator.ofFloat(target, "alpha", 0f, 1f).setDuration(500).start()
+                    isAnimStop = true
+                    isStop = true
+                }
+
+                override fun onAnimationStart(animation: Animation?) {
+                    isAnimStop = false
+                }
+
+            })
+            target.startAnimation(anim)
+        }
+
+    }
     /* Helper Methods */ //Helper to trigger hide/show animation
     private fun restartAnimator(target: View, value: Float) {
         isStop = false
@@ -111,8 +155,24 @@ class QuickHideBehavior : CoordinatorLayout.Behavior<View?> {
         if(isHide) {
             isHide = false
             val anim = ResizeHeightAnimation(target, mHeight!!)
-            anim.duration = 1000
+            anim.duration = 500
             anim.interpolator = FastOutSlowInInterpolator()
+            anim.setAnimationListener(object : Animation.AnimationListener {
+                override fun onAnimationRepeat(animation: Animation?) {
+
+                }
+
+                override fun onAnimationEnd(animation: Animation?) {
+                    (target.parent as CoordinatorLayout).findViewById<CropImageView>(R.id.cropImageView).setImageUriAsync((target.parent as CoordinatorLayout).findViewById<CropImageView>(R.id.cropImageView).imageUri)
+                    ObjectAnimator.ofFloat(target, "alpha", 0f, 1f).setDuration(500).start()
+                    isAnimStop = true
+                }
+
+                override fun onAnimationStart(animation: Animation?) {
+                    isAnimStop = false
+                }
+
+            })
             target.startAnimation(anim)
         }else {
             isHide = true
@@ -120,9 +180,24 @@ class QuickHideBehavior : CoordinatorLayout.Behavior<View?> {
                 mHeight = target.height
             }
             val anim = ResizeHeightAnimation(target, 0)
-            anim.duration = 1000
+            anim.duration = 500
+            anim.setAnimationListener(object : Animation.AnimationListener {
+                        override fun onAnimationRepeat(animation: Animation?) {
+
+                        }
+
+                        override fun onAnimationEnd(animation: Animation?) {
+                            isAnimStop = true
+                        }
+
+                        override fun onAnimationStart(animation: Animation?) {
+                            isAnimStop = false
+                        }
+
+                    })
             anim.interpolator = FastOutSlowInInterpolator()
             target.startAnimation(anim)
+            ObjectAnimator.ofFloat(target, "alpha", 1f, 0f).setDuration(500).start()
         }
 
 
