@@ -56,27 +56,27 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:id="@+id/feedAction_bar"
         android:layout_width="0dp"
-        android:layout_height="20dp"
+        android:layout_height="24dp"
         android:layout_marginTop="12dp"
         app:layout_constraintTop_toBottomOf="@id/post_imageView"
         app:layout_constraintStart_toStartOf="@id/post_imageView"
         app:layout_constraintEnd_toEndOf="@id/post_imageView">
         <ImageView
             android:id="@+id/like_imageView"
-            android:layout_width="20dp"
+            android:layout_width="24dp"
             android:layout_height="match_parent"
             android:src="@drawable/heart"
             app:layout_constraintStart_toStartOf="parent"/>
         <ImageView
             android:id="@+id/comment_imageView"
-            android:layout_width="20dp"
+            android:layout_width="24dp"
             android:layout_height="match_parent"
             android:layout_marginStart="20dp"
             android:src="@drawable/comment"
             app:layout_constraintStart_toEndOf="@id/like_imageView"/>
         <ImageView
             android:id="@+id/share_imageView"
-            android:layout_width="20dp"
+            android:layout_width="24dp"
             android:layout_height="match_parent"
             android:layout_marginStart="20dp"
             android:src="@drawable/share"

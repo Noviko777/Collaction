@@ -4,13 +4,14 @@
     android:layout_height="match_parent"
     xmlns:tools="http://schemas.android.com/tools"
     tools:context=".fragments.SearchFragment"
+    android:background="@color/white"
     xmlns:app="http://schemas.android.com/apk/res-auto">
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideProfileBackground"
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"
-        app:layout_constraintGuide_percent="0.15"/>
+        app:layout_constraintGuide_begin="100dp"/>
 
     <androidx.constraintlayout.widget.Guideline
         android:id="@+id/guideTopBar"
@@ -30,76 +31,59 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:orientation="horizontal"/>
-    <ImageView
+
+
+    <androidx.recyclerview.widget.RecyclerView
+        android:id="@+id/accounts_recyclerView"
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:src="@drawable/profile_background"
-        android:scaleType="centerCrop"
+        android:layout_marginTop="16dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="@id/guideProfileBackground"/>
+        app:layout_constraintTop_toBottomOf="@id/action_bar"
+        app:layout_constraintBottom_toBottomOf="parent"/>
+
     <androidx.constraintlayout.widget.ConstraintLayout
+        android:id="@+id/action_bar"
         android:layout_width="0dp"
-        android:layout_height="0dp"
+        android:layout_height="55dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="@id/guideTopBar">
+        app:layout_constraintTop_toTopOf="parent">
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/guideSettings"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            app:layout_constraintGuide_percent="0.12"/>
+            app:layout_constraintGuide_begin="50dp"/>
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/guideMenu"
             android:layout_width="wrap_content"
             android:layout_height="wrap_content"
             android:orientation="vertical"
-            app:layout_constraintGuide_percent="0.88"/>
+            app:layout_constraintGuide_end="50dp"/>
 
 
         <ImageView
+            android:id="@+id/cancel_imageView"
             android:layout_width="0dp"
             android:layout_height="0dp"
-            android:padding="10dp"
-            android:src="@drawable/ic_settings"
+            android:padding="12dp"
+            android:src="@drawable/back"
             app:layout_constraintStart_toStartOf="parent"
             app:layout_constraintEnd_toEndOf="@id/guideSettings"
             app:layout_constraintTop_toTopOf="parent"
             app:layout_constraintBottom_toBottomOf="parent"/>
-        <ImageView
-            android:layout_width="0dp"
-            android:layout_height="0dp"
-            android:padding="10dp"
-            android:src="@drawable/ic_menu"
-            app:layout_constraintStart_toStartOf="@id/guideMenu"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintBottom_toBottomOf="parent"/>
-    </androidx.constraintlayout.widget.ConstraintLayout>
 
-    <androidx.constraintlayout.widget.ConstraintLayout
-        android:layout_width="0dp"
-        android:layout_height="0dp"
-        android:background="@drawable/main_panel_background"
-        app:layout_constraintStart_toStartOf="parent"
-        app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="@id/guideMainPanel"
-        app:layout_constraintBottom_toBottomOf="parent">
         <TextView
             android:layout_width="match_parent"
             android:layout_height="wrap_content"
-            android:text="Search"
-            android:textAlignment="center"
+            android:text="Accounts"
+            android:textSize="28sp"
             android:textStyle="bold"
-            android:textSize="22sp"
             android:textColor="@color/black"
-            app:layout_constraintBottom_toBottomOf="parent"
-            app:layout_constraintTop_toTopOf="parent"
-            app:layout_constraintEnd_toEndOf="parent"
-            app:layout_constraintStart_toStartOf="parent"/>
+            android:gravity="center"
+            app:layout_constraintBottom_toBottomOf="parent"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>

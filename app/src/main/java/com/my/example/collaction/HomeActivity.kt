@@ -19,6 +19,7 @@ import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import com.google.firebase.database.*
 import com.google.firebase.database.ktx.getValue
+import com.my.example.collaction.adapters.UsersAdapter
 import com.my.example.collaction.fragments.*
 import com.my.example.collaction.interfaces.BaseFragmentListener
 import com.my.example.collaction.interfaces.BaseOnClickListener
@@ -35,24 +36,27 @@ import java.io.ByteArrayOutputStream
 import kotlin.collections.ArrayList
 
 
-class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListener,
+class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListener, SearchFragment.Listener,
     EditProfileFragment.Listener, KeyboardVisibilityEventListener, PasswordDialog.Listener,
-        ShareFragment.Listener, PublishPostFragment.Listener, HomeListener{
+        ShareFragment.Listener, PublishPostFragment.Listener, HomeListener, UsersAdapter.Listener{
 
     private val TAKE_PICTURE_REQUEST_CODE: Int = 111
     private val CROP_PICTURE_REQUEST_CODE: Int = 112
     private val MY_READ_PERMISSION_CODE: Int = 101
 
     private val mFirebase = FirebaseHelper(this)
-    private var postEventListener: ValueEventListener? = null
+    private var usersEventListener: ValueEventListener? = null
 
     private lateinit var mUser: User
     private lateinit var mPendingUser: User
     private lateinit var mPosts: List<String>
+    private var mUsers: List<User> = emptyList()
+
     private var mFeedPosts: List<FeedPost>? = null
 
     private lateinit var mCallback: (photo: String?) -> Unit
     private var mFeedPostsCallback: ((posts: List<FeedPost>) -> Unit)? = null
+    private var mAllUsersCallback: ((posts: List<User>) -> Unit)? = null
     private lateinit var mReloadPhotoCallback: () -> Unit
 
     private lateinit var mPostBitmap: Bitmap
@@ -160,7 +164,11 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
 //                mFirebase.database.removeEventListener(postEventListener!!)
 //            }
             if(nextFragment != null) {
-                supportFragmentManager.beginTransaction().replace(R.id.fragment, nextFragment).commit()
+                if(nextFragment is SearchFragment)
+                    supportFragmentManager.beginTransaction().addToBackStack(null).replace(R.id.fragment, nextFragment).commit()
+                else
+                    supportFragmentManager.beginTransaction().replace(R.id.fragment, nextFragment).commit()
+
                 true
             }
             else {
@@ -387,5 +395,63 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
         )
         return Uri.parse(path)
     }
+
+    override fun getAllUsers(onSuccess: (List<User>) -> Unit) {
+       if(usersEventListener == null) {
+           usersEventListener = mFirebase.database.child("users").addValueEventListener(object : ValueEventListener {
+               override fun onCancelled(error: DatabaseError) {
+                   TODO("Not yet implemented")
+               }
+
+               override fun onDataChange(snapshot: DataSnapshot) {
+                   val allUsers = snapshot.children.map { it.getValue(User::class.java)!!.copy(uid = it.key!!) }
+                   val (userList, otherUsersList) = allUsers.partition { it.uid ==  mFirebase.auth.currentUser!!.uid}
+                   mUsers = otherUsersList
+                   mAllUsersCallback!!(mUsers)
+               }
+
+           })
+       }
+        mAllUsersCallback = onSuccess
+        if(mAllUsersCallback != null) {
+            mAllUsersCallback!!(mUsers)
+        }
+    }
+
+    override fun detachAllUsers() {
+        mFirebase.database.removeEventListener(usersEventListener!!)
+        usersEventListener = null
+        mAllUsersCallback = null
+    }
+
+    override fun follow(uid: String) {
+        val setFollow = mFirebase.database.child("users").child(mFirebase.auth.currentUser!!.uid)
+                .child("follows").child(uid).setValue(true)
+        val setFollower = mFirebase.database.child("users").child(uid).child("followers")
+                .child(mFirebase.auth.currentUser!!.uid).setValue(true)
+
+        setFollow.continueWithTask {setFollower}.addOnCompleteListener {
+            if(it.isSuccessful) {
+            } else {
+                Toast.makeText(this, it.exception!!.message, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+    override fun unFollow(uid: String) {
+        val setFollow = mFirebase.database.child("users").child(mFirebase.auth.currentUser!!.uid)
+                .child("follows").child(uid).removeValue()
+        val setFollower = mFirebase.database.child("users").child(uid).child("followers")
+                .child(mFirebase.auth.currentUser!!.uid).removeValue()
+
+        setFollow.continueWithTask {setFollower}.addOnCompleteListener {
+            if(it.isSuccessful) {
+            } else {
+                Toast.makeText(this, it.exception!!.message, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
+
+
 
 }
