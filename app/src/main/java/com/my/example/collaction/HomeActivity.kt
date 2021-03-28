@@ -52,7 +52,7 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
     private var mFeedPosts: List<FeedPost>? = null
 
     private lateinit var mCallback: (photo: String?) -> Unit
-    private lateinit var mFeedPostsCallback: (posts: List<FeedPost>) -> Unit
+    private var mFeedPostsCallback: ((posts: List<FeedPost>) -> Unit)? = null
     private lateinit var mReloadPhotoCallback: () -> Unit
 
     private lateinit var mPostBitmap: Bitmap
@@ -103,7 +103,7 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
                 override fun onDataChange(snapshot: DataSnapshot) {
                     mFeedPosts = snapshot.children.map { it.getValue(FeedPost::class.java)!! }
                     if(mFeedPostsCallback != null) {
-                        mFeedPostsCallback(mFeedPosts!!)
+                        mFeedPostsCallback!!(mFeedPosts!!)
                     }
                 }
 
@@ -327,8 +327,12 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
     override fun getAllFeedPosts(postsCallBack: (List<FeedPost>) -> Unit) {
         mFeedPostsCallback = postsCallBack
         if(mFeedPosts != null) {
-            mFeedPostsCallback(mFeedPosts!!)
+            mFeedPostsCallback!!(mFeedPosts!!)
         }
+    }
+
+    override fun detachFeedPosts() {
+        mFeedPostsCallback = null
     }
 
     override fun openPostFragment(bitmap: Bitmap) {

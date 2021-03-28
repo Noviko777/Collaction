@@ -55,8 +55,10 @@ class HomeFragment : Fragment() {
             feedPostAdapter = FeedPostAdapter(context!!,it)
             feedPostRecyclerView.adapter = feedPostAdapter
         }
-
-
     }
 
+    override fun onStop() {
+        homeListener.detachFeedPosts()
+        super.onStop()
+    }
 }

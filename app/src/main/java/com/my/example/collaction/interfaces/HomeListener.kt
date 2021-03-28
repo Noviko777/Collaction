@@ -6,4 +6,5 @@ interface HomeListener {
     fun getGalleryImages(tryRequest: () -> Unit) : List<String>
     fun getUserPosts() : List<String>
     fun getAllFeedPosts(postsCallBack: (List<FeedPost>) -> Unit)
+    fun detachFeedPosts()
 }

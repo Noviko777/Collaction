@@ -45,8 +45,7 @@
         android:layout_height="50dp"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
-        app:layout_constraintTop_toTopOf="parent"
-        app:layout_constraintBottom_toBottomOf="@id/guideTopBar">
+        app:layout_constraintTop_toTopOf="parent">
         <androidx.constraintlayout.widget.Guideline
             android:id="@+id/guideSettings"
             android:layout_width="wrap_content"
@@ -84,7 +83,8 @@
     <androidx.constraintlayout.widget.ConstraintLayout
         android:layout_width="0dp"
         android:layout_height="0dp"
-        android:background="@drawable/panel_background"
+        android:layout_marginTop="9dp"
+        android:background="@drawable/post_background"
         app:layout_constraintStart_toStartOf="parent"
         app:layout_constraintEnd_toEndOf="parent"
         app:layout_constraintTop_toBottomOf="@+id/action_bar"
@@ -96,7 +96,7 @@
             android:layout_height="match_parent"
             android:paddingStart="16dp"
             android:paddingEnd="16dp"
-            android:background="@drawable/panel_background"/>
+            android:background="@drawable/post_background"/>
 
     </androidx.constraintlayout.widget.ConstraintLayout>
 </androidx.constraintlayout.widget.ConstraintLayout>
