@@ -50,7 +50,7 @@ class ProfileFragment : Fragment() {
         view.editProfileImageView.setOnClickListener {
             parentActivity.openOtherFragment(EditProfileFragment())
         }
-        Glide.with(view).load(user.photo).centerCrop().into(view.findViewById(R.id.profileImageView))
+        Glide.with(view).load(user.photo).error(R.drawable.unnamed).centerCrop().into(view.findViewById(R.id.profileImageView))
         view.findViewById<TextView>(R.id.username_text).text = user.username
 
         recyclerView = view.findViewById(R.id.posts_recyclerView)

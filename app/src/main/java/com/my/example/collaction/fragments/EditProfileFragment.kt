@@ -74,7 +74,7 @@ class EditProfileFragment : Fragment() {
                 Glide.with(view).load(it).centerCrop().into(view.findViewById(R.id.profileImageView))
             }
         }
-        Glide.with(view).load(user.photo).centerCrop().into(view.findViewById(R.id.profileImageView))
+        Glide.with(view).load(user.photo).error(R.drawable.unnamed).centerCrop().into(view.findViewById(R.id.profileImageView))
 
     }
 

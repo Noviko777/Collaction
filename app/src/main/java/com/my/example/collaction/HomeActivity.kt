@@ -18,7 +18,6 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import com.google.firebase.database.*
-import com.google.firebase.database.ktx.getValue
 import com.my.example.collaction.adapters.UsersAdapter
 import com.my.example.collaction.fragments.*
 import com.my.example.collaction.interfaces.BaseFragmentListener
@@ -45,14 +44,15 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
     private val MY_READ_PERMISSION_CODE: Int = 101
 
     private val mFirebase = FirebaseHelper(this)
-    private var usersEventListener: ValueEventListener? = null
+    private var mUsersEventListener: ValueEventListener? = null
+    private var mPostsEventListener: ValueEventListener? = null
 
     private lateinit var mUser: User
     private lateinit var mPendingUser: User
     private lateinit var mPosts: List<String>
     private var mUsers: List<User> = emptyList()
 
-    private var mFeedPosts: List<FeedPost>? = null
+    private var mFeedPosts: MutableList<FeedPost>? = null
 
     private lateinit var mCallback: (photo: String?) -> Unit
     private var mFeedPostsCallback: ((posts: List<FeedPost>) -> Unit)? = null
@@ -99,19 +99,20 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
                 }
 
             })
-            mFirebase.database.child("feed-posts").child(mFirebase.auth.currentUser!!.uid).addValueEventListener(object : ValueEventListener {
-                override fun onCancelled(error: DatabaseError) {
-
-                }
-
-                override fun onDataChange(snapshot: DataSnapshot) {
-                    mFeedPosts = snapshot.children.map { it.getValue(FeedPost::class.java)!! }
-                    if(mFeedPostsCallback != null) {
-                        mFeedPostsCallback!!(mFeedPosts!!)
-                    }
-                }
-
-            })
+//            mFirebase.database.child("feed-posts").child(mFirebase.auth.currentUser!!.uid).addValueEventListener(object : ValueEventListener {
+//                override fun onCancelled(error: DatabaseError) {
+//
+//                }
+//
+//                override fun onDataChange(snapshot: DataSnapshot) {
+//                    mFeedPosts = snapshot.children.map { it.getValue(FeedPost::class.java)!! }
+//                    if(mFeedPostsCallback != null) {
+//                        mFeedPostsCallback!!(mFeedPosts!!)
+//                    }
+//                }
+//
+//            })
+            mPostsEventListener = setPostsEventListener()
         }
 
 
@@ -125,6 +126,27 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
 
     override fun onStart() {
         super.onStart()
+    }
+
+    private fun setPostsEventListener(): ValueEventListener {
+        return mFirebase.database.child("feed-posts").addValueEventListener(object : ValueEventListener {
+            override fun onCancelled(error: DatabaseError) {
+
+            }
+
+            override fun onDataChange(snapshot: DataSnapshot) {
+                mFeedPosts = ArrayList<FeedPost>()
+                mFeedPosts!!.addAll(snapshot.child(mFirebase.auth.currentUser!!.uid).children.map { it.getValue(FeedPost::class.java)!! }.toTypedArray())
+                mUser.follows.keys.forEach {
+                    mFeedPosts!!.addAll(snapshot.child(it).children.map { it.getValue(FeedPost::class.java)!! }.toTypedArray())
+                }
+                mFeedPosts = mFeedPosts!!.map { it }.sortedByDescending { it.timeStampDate() }.toMutableList()
+                if(mFeedPostsCallback != null) {
+                    mFeedPostsCallback!!(mFeedPosts!!)
+                }
+            }
+
+        })
     }
 
     fun openOtherFragment(fragment: Fragment) {
@@ -397,8 +419,8 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
     }
 
     override fun getAllUsers(onSuccess: (List<User>) -> Unit) {
-       if(usersEventListener == null) {
-           usersEventListener = mFirebase.database.child("users").addValueEventListener(object : ValueEventListener {
+       if(mUsersEventListener == null) {
+           mUsersEventListener = mFirebase.database.child("users").addValueEventListener(object : ValueEventListener {
                override fun onCancelled(error: DatabaseError) {
                    TODO("Not yet implemented")
                }
@@ -419,8 +441,8 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
     }
 
     override fun detachAllUsers() {
-        mFirebase.database.removeEventListener(usersEventListener!!)
-        usersEventListener = null
+        mFirebase.database.removeEventListener(mUsersEventListener!!)
+        mUsersEventListener = null
         mAllUsersCallback = null
     }
 
@@ -432,6 +454,10 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
 
         setFollow.continueWithTask {setFollower}.addOnCompleteListener {
             if(it.isSuccessful) {
+                if(mPostsEventListener != null)
+                    mFirebase.database.removeEventListener(mPostsEventListener!!)
+                mPostsEventListener = setPostsEventListener()
+
             } else {
                 Toast.makeText(this, it.exception!!.message, Toast.LENGTH_SHORT).show()
             }
@@ -446,6 +472,9 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
 
         setFollow.continueWithTask {setFollower}.addOnCompleteListener {
             if(it.isSuccessful) {
+                if(mPostsEventListener != null)
+                    mFirebase.database.removeEventListener(mPostsEventListener!!)
+                mPostsEventListener = setPostsEventListener()
             } else {
                 Toast.makeText(this, it.exception!!.message, Toast.LENGTH_SHORT).show()
             }

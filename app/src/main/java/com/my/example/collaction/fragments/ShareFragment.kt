@@ -22,6 +22,7 @@ import com.theartofdev.edmodo.cropper.CropImageView
 import kotlinx.android.synthetic.main.fragment_share.*
 import java.io.File
 
+// TODO: После получения разрешения на работу с файлами, не обновится recycler view
 
 class ShareFragment : Fragment() {
 
@@ -70,7 +71,9 @@ class ShareFragment : Fragment() {
 
         })
         shareRecyclerView.adapter = shareGalleryAdapter
-        view.findViewById<CropImageView>(R.id.cropImageView).setImageUriAsync(Uri.fromFile(File(images.first())))
+        if(images.isNotEmpty())
+            view.findViewById<CropImageView>(R.id.cropImageView).setImageUriAsync(Uri.fromFile(File(images.first())))
+
         view.findViewById<View>(R.id.save_image_view).setOnClickListener {
             mListener.openPostFragment(view.findViewById<CropImageView>(R.id.cropImageView).croppedImage)
         }
