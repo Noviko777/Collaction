@@ -43,8 +43,8 @@ class FeedPostAdapter : RecyclerView.Adapter<FeedPostAdapter.FeedPostViewHolder>
         val post = mFeedPosts.get(position)
 
         Glide.with(mContext).load(post.image).into(holder.image)
-        Glide.with(mContext).load(post.photo).into(holder.photo)
-        holder.caption.text = post.caption
+        Glide.with(mContext).load(post.photo).error(R.drawable.unnamed).centerCrop().into(holder.profilePhoto)
+        holder.username.text = post.username
 
         val likedSpannable = SpannableString("${post.likesCount} more")
         likedSpannable.setSpan(StyleSpan(Typeface.BOLD), 0, likedSpannable.length, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE)
@@ -63,17 +63,21 @@ class FeedPostAdapter : RecyclerView.Adapter<FeedPostAdapter.FeedPostViewHolder>
 
             override fun updateDrawState(ds: TextPaint) { }
         }, 0, usernameSpannable.length, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE)
-        val captionSpannable = SpannableString(post.caption)
-        captionSpannable.setSpan(RelativeSizeSpan(0.9f), 0, captionSpannable.length, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE)
+        if(!post.caption.isNullOrEmpty()) {
+            val captionSpannable = SpannableString(post.caption)
+            captionSpannable.setSpan(RelativeSizeSpan(0.9f), 0, captionSpannable.length, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE)
 
-        var position = 0
-        position = post.caption.indexOf("#", position)
-        while (position != -1) {
-            hashTagSpannable(captionSpannable, position, if (post.caption.indexOf(" ", position + 1) !== -1) post.caption.indexOf(" ", position + 1) else post.caption.length)
-            position = post.caption.indexOf("#", position + 1)
+            var position = 0
+            position = post.caption.indexOf("#", position)
+            while (position != -1) {
+                hashTagSpannable(captionSpannable, position, if (post.caption.indexOf(" ", position + 1) !== -1) post.caption.indexOf(" ", position + 1) else post.caption.length)
+                position = post.caption.indexOf("#", position + 1)
+            }
+
+            holder.caption.text = SpannableStringBuilder().append(usernameSpannable).append("  ").append(captionSpannable)
         }
-
-        holder.caption.text = SpannableStringBuilder().append(usernameSpannable).append("  ").append(captionSpannable)
+        else
+            holder.caption.visibility = View.GONE
 
         val commentsSpannable = SpannableString("(${post.commentsCount})")
         commentsSpannable.setSpan(StyleSpan(Typeface.BOLD), 0, commentsSpannable.length, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE)
@@ -91,7 +95,7 @@ class FeedPostAdapter : RecyclerView.Adapter<FeedPostAdapter.FeedPostViewHolder>
 
 
     class FeedPostViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val photo: ImageView
+        val profilePhoto: ImageView
         val image: ImageView
         val username: TextView
         val caption: TextView
@@ -100,7 +104,7 @@ class FeedPostAdapter : RecyclerView.Adapter<FeedPostAdapter.FeedPostViewHolder>
 
 
         init {
-            photo = itemView.findViewById(R.id.profileImageView)
+            profilePhoto = itemView.findViewById(R.id.profileImageView)
             image = itemView.findViewById(R.id.post_imageView)
             username = itemView.findViewById(R.id.username_text)
             caption = itemView.findViewById(R.id.caption_text)
