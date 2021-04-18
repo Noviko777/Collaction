@@ -8,8 +8,7 @@ import android.graphics.Bitmap
 import android.net.Uri
 import android.os.Bundle
 import android.provider.MediaStore
-import android.view.View
-import android.view.WindowManager
+import android.view.*
 import android.view.inputmethod.InputMethodManager
 import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
@@ -18,6 +17,7 @@ import androidx.core.content.ContextCompat
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import com.google.firebase.database.*
+import com.my.example.collaction.adapters.FeedPostAdapter
 import com.my.example.collaction.adapters.UsersAdapter
 import com.my.example.collaction.fragments.*
 import com.my.example.collaction.interfaces.BaseFragmentListener
@@ -37,7 +37,7 @@ import kotlin.collections.ArrayList
 
 class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListener, SearchFragment.Listener,
     EditProfileFragment.Listener, KeyboardVisibilityEventListener, PasswordDialog.Listener,
-        ShareFragment.Listener, PublishPostFragment.Listener, HomeListener, UsersAdapter.Listener{
+        ShareFragment.Listener, PublishPostFragment.Listener, HomeListener, UsersAdapter.Listener, FeedPostAdapter.Listener{
 
     private val TAKE_PICTURE_REQUEST_CODE: Int = 111
     private val CROP_PICTURE_REQUEST_CODE: Int = 112
@@ -112,7 +112,7 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
 //                }
 //
 //            })
-            mPostsEventListener = setPostsEventListener()
+        //    mPostsEventListener = setPostsEventListener()
         }
 
 
@@ -128,26 +128,26 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
         super.onStart()
     }
 
-    private fun setPostsEventListener(): ValueEventListener {
-        return mFirebase.database.child("feed-posts").addValueEventListener(object : ValueEventListener {
-            override fun onCancelled(error: DatabaseError) {
-
-            }
-
-            override fun onDataChange(snapshot: DataSnapshot) {
-                mFeedPosts = ArrayList<FeedPost>()
-                mFeedPosts!!.addAll(snapshot.child(mFirebase.auth.currentUser!!.uid).children.map { it.getValue(FeedPost::class.java)!! }.toTypedArray())
-                mUser.follows.keys.forEach {
-                    mFeedPosts!!.addAll(snapshot.child(it).children.map { it.getValue(FeedPost::class.java)!! }.toTypedArray())
-                }
-                mFeedPosts = mFeedPosts!!.map { it }.sortedByDescending { it.timeStampDate() }.toMutableList()
-                if(mFeedPostsCallback != null) {
-                    mFeedPostsCallback!!(mFeedPosts!!)
-                }
-            }
-
-        })
-    }
+//    private fun setPostsEventListener(): ValueEventListener {
+//        return mFirebase.database.child("feed-posts").addListenerForSingleValueEvent(object : ValueEventListener {
+//            override fun onCancelled(error: DatabaseError) {
+//
+//            }
+//
+//            override fun onDataChange(snapshot: DataSnapshot) {
+//                mFeedPosts = ArrayList<FeedPost>()
+//                mFeedPosts!!.addAll(snapshot.child(mFirebase.auth.currentUser!!.uid).children.map { it.getValue(FeedPost::class.java)!!.copy(id = it.key!!) }.toTypedArray())
+//                mUser.follows.keys.forEach {
+//                    mFeedPosts!!.addAll(snapshot.child(it).children.map { it.getValue(FeedPost::class.java)!!.copy(id = it.key!!) }.toTypedArray())
+//                }
+//                mFeedPosts = mFeedPosts!!.map { it }.sortedByDescending { it.timeStampDate() }.toMutableList()
+//                if(mFeedPostsCallback != null) {
+//                    mFeedPostsCallback!!(mFeedPosts!!)
+//                }
+//            }
+//
+//        })
+//    }
 
     fun openOtherFragment(fragment: Fragment) {
         supportFragmentManager.beginTransaction().replace(R.id.fragment, fragment).addToBackStack(null).commit()
@@ -204,6 +204,8 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
     }
 
     override fun getUser(): User = mUser
+    override fun getCurrentUid(): String = mFirebase.auth.currentUser!!.uid
+
 
     override fun updateProfile(user: User) {
         val error = validateUser(user)
@@ -356,9 +358,27 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
     override fun getUserPosts(): List<String> = mPosts
     override fun getAllFeedPosts(postsCallBack: (List<FeedPost>) -> Unit) {
         mFeedPostsCallback = postsCallBack
-        if(mFeedPosts != null) {
-            mFeedPostsCallback!!(mFeedPosts!!)
-        }
+        mFirebase.database.child("feed-posts").addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onCancelled(error: DatabaseError) {
+
+            }
+
+            override fun onDataChange(snapshot: DataSnapshot) {
+                mFeedPosts = ArrayList<FeedPost>()
+                mFeedPosts!!.addAll(snapshot.child(mFirebase.auth.currentUser!!.uid).children.map { it.getValue(FeedPost::class.java)!!.copy(id = it.key!!) }.toTypedArray())
+                mUser.follows.keys.forEach {
+                    mFeedPosts!!.addAll(snapshot.child(it).children.map { it.getValue(FeedPost::class.java)!!.copy(id = it.key!!) }.toTypedArray())
+                }
+                mFeedPosts = mFeedPosts!!.map { it }.sortedByDescending { it.timeStampDate() }.toMutableList()
+                if(mFeedPostsCallback != null) {
+                    mFeedPostsCallback!!(mFeedPosts!!)
+                }
+            }
+
+        })
+//        if(mFeedPosts != null) {
+//            mFeedPostsCallback!!(mFeedPosts!!)
+//        }
     }
 
     override fun detachFeedPosts() {
@@ -456,7 +476,7 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
             if(it.isSuccessful) {
                 if(mPostsEventListener != null)
                     mFirebase.database.removeEventListener(mPostsEventListener!!)
-                mPostsEventListener = setPostsEventListener()
+        //        mPostsEventListener = setPostsEventListener()
 
             } else {
                 Toast.makeText(this, it.exception!!.message, Toast.LENGTH_SHORT).show()
@@ -474,12 +494,42 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
             if(it.isSuccessful) {
                 if(mPostsEventListener != null)
                     mFirebase.database.removeEventListener(mPostsEventListener!!)
-                mPostsEventListener = setPostsEventListener()
+             //   mPostsEventListener = setPostsEventListener()
             } else {
                 Toast.makeText(this, it.exception!!.message, Toast.LENGTH_SHORT).show()
             }
         }
     }
+
+    override fun toggleLike(uid: String, feedId: String, onSuccess: (post: FeedPost) -> Unit) {
+        val ref = mFirebase.database.child("feed-posts").child(uid).child(feedId)
+        ref.child("likes").child(mFirebase.auth.currentUser!!.uid).addListenerForSingleValueEvent(object : ValueEventListener {
+            override fun onCancelled(error: DatabaseError) {
+
+            }
+
+            override fun onDataChange(snapshot: DataSnapshot) {
+                if(snapshot.exists()) {
+                    ref.child("likes").child(mFirebase.auth.currentUser!!.uid).removeValue()
+                } else {
+                    ref.child("likes").child(mFirebase.auth.currentUser!!.uid).setValue(true)
+                }
+                ref.addListenerForSingleValueEvent(object : ValueEventListener {
+                    override fun onCancelled(error: DatabaseError) {
+                    }
+
+                    override fun onDataChange(snapshot: DataSnapshot) {
+                        onSuccess(snapshot.getValue(FeedPost::class.java)!!.copy(id = snapshot.key!!))
+                    }
+
+                })
+
+            }
+
+        })
+    }
+
+
 
 
 

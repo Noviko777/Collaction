@@ -17,16 +17,18 @@ import android.widget.TextView
 import androidx.recyclerview.widget.RecyclerView
 import com.bumptech.glide.Glide
 import com.my.example.collaction.R
+import com.my.example.collaction.interfaces.BaseOnClickListener
 import com.my.example.collaction.models.FeedPost
 
 
-class FeedPostAdapter : RecyclerView.Adapter<FeedPostAdapter.FeedPostViewHolder> {
-    private lateinit var mContext: Context
-    private lateinit var mFeedPosts: List<FeedPost>
+class FeedPostAdapter(private val mListener: Listener, private val mContext: Context, private var mFeedPosts: MutableList<FeedPost>)
+    : RecyclerView.Adapter<FeedPostAdapter.FeedPostViewHolder>() {
 
-    constructor(mContext: Context, mFeedPosts: List<FeedPost>) : super() {
-        this.mContext = mContext
-        this.mFeedPosts = mFeedPosts
+    private var userUid: String = (mContext as BaseOnClickListener).getCurrentUid()
+
+
+    interface Listener {
+        fun toggleLike(uid: String, feedId: String, onSuccess: (post: FeedPost) -> Unit)
     }
 
     fun setFeedPosts(posts: List<FeedPost>) {
@@ -46,7 +48,7 @@ class FeedPostAdapter : RecyclerView.Adapter<FeedPostAdapter.FeedPostViewHolder>
         Glide.with(mContext).load(post.photo).error(R.drawable.unnamed).centerCrop().into(holder.profilePhoto)
         holder.username.text = post.username
 
-        val likedSpannable = SpannableString("${post.likesCount} more")
+        val likedSpannable = SpannableString("${post.likes.size} more")
         likedSpannable.setSpan(StyleSpan(Typeface.BOLD), 0, likedSpannable.length, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE)
         likedSpannable.setSpan(ForegroundColorSpan(Color.BLACK), 0, likedSpannable.length, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE)
       //  likedSpannable.setSpan(RelativeSizeSpan(1f), 0, likedSpannable.length, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE)
@@ -85,7 +87,19 @@ class FeedPostAdapter : RecyclerView.Adapter<FeedPostAdapter.FeedPostViewHolder>
                 0, commentsSpannable.length, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE)
 
         holder.comments.text = SpannableStringBuilder().append("View all comments ").append(commentsSpannable)
-
+        holder.likeImageView.setOnClickListener {
+            mListener.toggleLike(post.uid, post.id) {
+                mFeedPosts[position] = it
+                val likedSpannable = SpannableString("$it more")
+                likedSpannable.setSpan(StyleSpan(Typeface.BOLD), 0, likedSpannable.length, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE)
+                likedSpannable.setSpan(ForegroundColorSpan(Color.BLACK), 0, likedSpannable.length, SpannableString.SPAN_EXCLUSIVE_EXCLUSIVE)
+                notifyItemChanged(position)
+            }
+        }
+        if(post.likes.containsKey(userUid))
+            holder.likeImageView.setImageResource(R.drawable.heart_active)
+        else
+            holder.likeImageView.setImageResource(R.drawable.heart)
 
     }
     private fun hashTagSpannable(s: Spannable, start: Int, end: Int) {
@@ -95,22 +109,14 @@ class FeedPostAdapter : RecyclerView.Adapter<FeedPostAdapter.FeedPostViewHolder>
 
 
     class FeedPostViewHolder(itemView: View) : RecyclerView.ViewHolder(itemView) {
-        val profilePhoto: ImageView
-        val image: ImageView
-        val username: TextView
-        val caption: TextView
-        val liked: TextView
-        val comments: TextView
+        val profilePhoto: ImageView = itemView.findViewById(R.id.profileImageView)
+        val image: ImageView = itemView.findViewById(R.id.post_imageView)
+        val username: TextView = itemView.findViewById(R.id.username_text)
+        val caption: TextView = itemView.findViewById(R.id.caption_text)
+        val liked: TextView = itemView.findViewById(R.id.likes_text)
+        val comments: TextView = itemView.findViewById(R.id.commentsCount_text)
+        val likeImageView: ImageView = itemView.findViewById(R.id.like_imageView)
 
-
-        init {
-            profilePhoto = itemView.findViewById(R.id.profileImageView)
-            image = itemView.findViewById(R.id.post_imageView)
-            username = itemView.findViewById(R.id.username_text)
-            caption = itemView.findViewById(R.id.caption_text)
-            liked = itemView.findViewById(R.id.likes_text)
-            comments = itemView.findViewById(R.id.commentsCount_text)
-        }
     }
 
 

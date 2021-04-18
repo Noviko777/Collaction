@@ -5,4 +5,5 @@ import com.my.example.collaction.models.User
 interface BaseOnClickListener {
     fun signOut()
     fun getUser(): User
+    fun getCurrentUid(): String
 }

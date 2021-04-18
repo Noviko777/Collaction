@@ -2,17 +2,14 @@ package com.my.example.collaction.fragments
 
 import android.content.Context
 import android.os.Bundle
+import android.view.*
 import androidx.fragment.app.Fragment
-import android.view.LayoutInflater
-import android.view.View
-import android.view.ViewGroup
 import androidx.recyclerview.widget.LinearLayoutManager
 import androidx.recyclerview.widget.RecyclerView
 import com.my.example.collaction.R
 import com.my.example.collaction.adapters.FeedPostAdapter
 import com.my.example.collaction.interfaces.BaseOnClickListener
 import com.my.example.collaction.interfaces.HomeListener
-import kotlinx.android.synthetic.main.fragment_home.view.*
 
 
 class HomeFragment : Fragment() {
@@ -35,7 +32,6 @@ class HomeFragment : Fragment() {
     }
 
 
-
     override fun onCreateView(
         inflater: LayoutInflater, container: ViewGroup?,
         savedInstanceState: Bundle?
@@ -52,7 +48,7 @@ class HomeFragment : Fragment() {
         feedPostRecyclerView.setHasFixedSize(true)
         feedPostRecyclerView.layoutManager = LinearLayoutManager(context)
         homeListener.getAllFeedPosts() {
-            feedPostAdapter = FeedPostAdapter(context!!,it)
+            feedPostAdapter = FeedPostAdapter(context as FeedPostAdapter.Listener, context!!, it.toMutableList())
             feedPostRecyclerView.adapter = feedPostAdapter
         }
     }
