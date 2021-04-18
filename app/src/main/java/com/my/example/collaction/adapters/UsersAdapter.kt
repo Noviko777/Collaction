@@ -13,13 +13,13 @@ import com.my.example.collaction.R
 import com.my.example.collaction.models.User
 import com.rishabhharit.roundedimageview.RoundedImageView
 
-class UsersAdapter(private val mContext: Context, private var mUsersList: List<User>, private var mFollows: Map<String, Boolean>,
+class UsersAdapter(private val mContext: Context, private var mUsersList: List<User>, private var mFollows: MutableMap<String, Boolean>,
                    private val listener: Listener)
     : RecyclerView.Adapter<UsersAdapter.UserViewHolder>() {
 
     private var mPositions = mapOf<String, Int>()
 
-    fun update(usersList: List<User>, follows: Map<String, Boolean>) {
+    fun update(usersList: List<User>, follows: MutableMap<String, Boolean>) {
         mUsersList = usersList
         mFollows = follows
         mPositions = usersList.withIndex().map { (idx, user) -> user.uid!! to idx }.toMap()
@@ -40,13 +40,21 @@ class UsersAdapter(private val mContext: Context, private var mUsersList: List<U
             val btn = itemView.findViewById<AppCompatButton>(R.id.follow_btn)
             if(follows) {
                 btn.setBackgroundResource(R.drawable.btn_message_background)
-                btn.setOnClickListener { listener.unFollow(user.uid!!) }
+                btn.setOnClickListener {
+                    listener.unFollow(user.uid)
+                    mFollows[user.uid] = false
+                    notifyItemChanged(position)}
                 btn.setTextColor(Color.BLACK)
                 btn.text = "Followed"
+
             }
             else {
                 btn.setBackgroundResource(R.drawable.btn_background)
-                btn.setOnClickListener { listener.follow(user.uid!!)  }
+                btn.setOnClickListener {
+                    listener.follow(user.uid)
+                    mFollows[user.uid] = true
+                    notifyItemChanged(position)
+                }
                 btn.setTextColor(Color.WHITE)
                 btn.text = "Follow"
             }

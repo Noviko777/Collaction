@@ -41,13 +41,8 @@
         <TextView
             android:layout_width="0dp"
             android:layout_height="wrap_content"
-            android:layout_marginStart="16dp"
+            style="@style/actionTitle"
             android:text="New photo"
-            android:textColor="@color/black"
-            android:textSize="20sp"
-            android:textStyle="bold"
-            android:gravity="center"
-            android:textAlignment="center"
             app:layout_constraintStart_toEndOf="@id/cancelImageView"
             app:layout_constraintBottom_toBottomOf="parent"
             app:layout_constraintTop_toTopOf="parent"/>

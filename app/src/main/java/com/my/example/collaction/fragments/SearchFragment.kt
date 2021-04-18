@@ -49,7 +49,7 @@ class SearchFragment() : Fragment() {
         mAccountsRecyclerView.layoutManager = LinearLayoutManager(context)
 
         mListener.getAllUsers {
-            mUsersAdapter = UsersAdapter(context!!, it, mBaseOnClickListener.getUser().follows, adapterListener)
+            mUsersAdapter = UsersAdapter(context!!, it, mBaseOnClickListener.getUser().follows.toMutableMap(), adapterListener)
             mAccountsRecyclerView.adapter = mUsersAdapter
         }
         view.findViewById<View>(R.id.cancel_imageView).setOnClickListener {

@@ -32,6 +32,7 @@ class PublishPostFragment : Fragment() {
     private lateinit var mBaseListener: BaseFragmentListener
     private lateinit var mListener: Listener
 
+    private var isShare: Boolean = false
 
     override fun onAttach(context: Context) {
         super.onAttach(context)
@@ -60,7 +61,11 @@ class PublishPostFragment : Fragment() {
             mBaseListener.popFragment()
         }
         view.findViewById<View>(R.id.save_image_view).setOnClickListener {
-            mListener.shareImage(view.findViewById<EditText>(R.id.caption_text).text.toString())
+            if(!isShare) {
+                isShare = true
+                mListener.shareImage(view.findViewById<EditText>(R.id.caption_text).text.toString())
+            }
+
         }
     }
 

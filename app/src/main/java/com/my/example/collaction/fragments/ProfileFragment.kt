@@ -40,7 +40,7 @@ class ProfileFragment : Fragment() {
         return inflater.inflate(R.layout.fragment_profile, container, false)
     }
 
-    fun showPopup(v : View){
+    private fun showPopup(v : View){
         val popup = PopupMenu(context!!, v)
         val inflater: MenuInflater = popup.menuInflater
         inflater.inflate(R.menu.profile_menu, popup.menu)

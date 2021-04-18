@@ -14,6 +14,7 @@ import android.widget.Toast
 import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
+import androidx.core.view.get
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import com.google.firebase.database.*
@@ -27,6 +28,7 @@ import com.my.example.collaction.models.FeedPost
 import com.my.example.collaction.models.User
 import com.my.example.collaction.utilis.FirebaseHelper
 import com.my.example.collaction.utilis.ImagesGallery
+import com.my.example.collaction.utilis.showToast
 import com.my.example.collaction.views.PasswordDialog
 import kotlinx.android.synthetic.main.activity_home.*
 import net.yslibrary.android.keyboardvisibilityevent.KeyboardVisibilityEvent
@@ -47,7 +49,7 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
     private var mUsersEventListener: ValueEventListener? = null
     private var mPostsEventListener: ValueEventListener? = null
 
-    private lateinit var mUser: User
+    private var mUser: User = User()
     private lateinit var mPendingUser: User
     private lateinit var mPosts: List<String>
     private var mUsers: List<User> = emptyList()
@@ -60,6 +62,8 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
     private lateinit var mReloadPhotoCallback: () -> Unit
 
     private lateinit var mPostBitmap: Bitmap
+
+    private var isPostsWantLoaded: Boolean = false
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
@@ -79,11 +83,14 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
         if(mFirebase.auth.currentUser != null) {
             mFirebase.database.child("users").child(mFirebase.auth.currentUser!!.uid).addValueEventListener(object: ValueEventListener{
                 override fun onCancelled(error: DatabaseError) {
-                    TODO("Not yet implemented")
                 }
 
                 override fun onDataChange(snapshot: DataSnapshot) {
-                    mUser = snapshot.getValue(User::class.java)!!
+                    mUser = snapshot.getValue(User::class.java)!!.copy(uid = snapshot.key!!)
+                    if(isPostsWantLoaded) {
+                        getAllFeedPosts(mFeedPostsCallback!!)
+                        isPostsWantLoaded = false
+                    }
                 }
 
             })
@@ -99,20 +106,6 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
                 }
 
             })
-//            mFirebase.database.child("feed-posts").child(mFirebase.auth.currentUser!!.uid).addValueEventListener(object : ValueEventListener {
-//                override fun onCancelled(error: DatabaseError) {
-//
-//                }
-//
-//                override fun onDataChange(snapshot: DataSnapshot) {
-//                    mFeedPosts = snapshot.children.map { it.getValue(FeedPost::class.java)!! }
-//                    if(mFeedPostsCallback != null) {
-//                        mFeedPostsCallback!!(mFeedPosts!!)
-//                    }
-//                }
-//
-//            })
-        //    mPostsEventListener = setPostsEventListener()
         }
 
 
@@ -124,30 +117,6 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
 
     }
 
-    override fun onStart() {
-        super.onStart()
-    }
-
-//    private fun setPostsEventListener(): ValueEventListener {
-//        return mFirebase.database.child("feed-posts").addListenerForSingleValueEvent(object : ValueEventListener {
-//            override fun onCancelled(error: DatabaseError) {
-//
-//            }
-//
-//            override fun onDataChange(snapshot: DataSnapshot) {
-//                mFeedPosts = ArrayList<FeedPost>()
-//                mFeedPosts!!.addAll(snapshot.child(mFirebase.auth.currentUser!!.uid).children.map { it.getValue(FeedPost::class.java)!!.copy(id = it.key!!) }.toTypedArray())
-//                mUser.follows.keys.forEach {
-//                    mFeedPosts!!.addAll(snapshot.child(it).children.map { it.getValue(FeedPost::class.java)!!.copy(id = it.key!!) }.toTypedArray())
-//                }
-//                mFeedPosts = mFeedPosts!!.map { it }.sortedByDescending { it.timeStampDate() }.toMutableList()
-//                if(mFeedPostsCallback != null) {
-//                    mFeedPostsCallback!!(mFeedPosts!!)
-//                }
-//            }
-//
-//        })
-//    }
 
     fun openOtherFragment(fragment: Fragment) {
         supportFragmentManager.beginTransaction().replace(R.id.fragment, fragment).addToBackStack(null).commit()
@@ -182,9 +151,7 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
                     HomeFragment()
                 }
             }
-//            if(postEventListener != null) {
-//                mFirebase.database.removeEventListener(postEventListener!!)
-//            }
+
             if(nextFragment != null) {
                 if(nextFragment is SearchFragment)
                     supportFragmentManager.beginTransaction().addToBackStack(null).replace(R.id.fragment, nextFragment).commit()
@@ -199,10 +166,7 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
         }
     }
 
-    override fun signOut() {
-        mFirebase.auth.signOut()
-    }
-
+    override fun signOut() = mFirebase.auth.signOut()
     override fun getUser(): User = mUser
     override fun getCurrentUid(): String = mFirebase.auth.currentUser!!.uid
 
@@ -211,7 +175,7 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
         val error = validateUser(user)
         if(error == null) {
             mPendingUser = user
-            if(mPendingUser.email == mUser.email) {
+            if(mPendingUser.email == mUser!!.email) {
                 updateUser(mPendingUser)
             }
             else {
@@ -224,17 +188,17 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
             }
         }
         else {
-            Toast.makeText(this, error, Toast.LENGTH_SHORT).show()
+            showToast(error)
         }
 
     }
 
     override fun loadPhoto(onLoaded: (photo: String?) -> Unit) {
-        takeCameraPictire()
+        takeCameraPicture()
         mCallback = onLoaded
     }
 
-    private fun takeCameraPictire() {
+    private fun takeCameraPicture() {
         val intent = Intent(Intent.ACTION_PICK,
             android.provider.MediaStore.Images.Media.EXTERNAL_CONTENT_URI)
 //        intent.addCategory(Intent.CATEGORY_OPENABLE)
@@ -253,19 +217,17 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
         super.onActivityResult(requestCode, resultCode, data)
         if(resultCode == Activity.RESULT_OK) {
             if(requestCode == TAKE_PICTURE_REQUEST_CODE) {
-
                 intent = Intent(this, CropImageActivity::class.java)
                 intent.putExtra("imageUri", data!!.data!!.toString())
                 startActivityForResult(intent, CROP_PICTURE_REQUEST_CODE)
             }
             else if(requestCode == CROP_PICTURE_REQUEST_CODE) {
-                val uid = mFirebase.auth.currentUser!!.uid
                 val photoUri = Uri.parse(data!!.getStringExtra("result"))
                 mFirebase.uploadUserPhoto(photoUri) {
                     if(photoUri != null) {
                         mFirebase.updateUserPhoto(it.toString()) {
                             mCallback(it)
-                            Toast.makeText(this, "Saved image", Toast.LENGTH_SHORT).show()
+                            showToast("Saved image")
                             contentResolver.delete(photoUri, null, null)
                         }
                     }
@@ -286,12 +248,12 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
 
     private fun updateUser(user: User) {
         val updatesMap = mutableMapOf<String, Any>()
-        if(user.name != mUser.name) updatesMap["name"] = user.name
-        if(user.username != mUser.username) updatesMap["username"] = user.username
-        if(user.website != mUser.website) updatesMap["website"] = user.website
-        if(user.bio != mUser.bio) updatesMap["bio"] = user.bio
-        if(user.email != mUser.email) updatesMap["email"] = user.email
-        if(user.phone != mUser.phone) updatesMap["phone"] = user.phone
+        if(user.name != mUser!!.name) updatesMap["name"] = user.name
+        if(user.username != mUser!!.username) updatesMap["username"] = user.username
+        if(user.website != mUser!!.website) updatesMap["website"] = user.website
+        if(user.bio != mUser!!.bio) updatesMap["bio"] = user.bio
+        if(user.email != mUser!!.email) updatesMap["email"] = user.email
+        if(user.phone != mUser!!.phone) updatesMap["phone"] = user.phone
 
         mFirebase.updateUser(updatesMap) {
             Toast.makeText(this, "Profile saved", Toast.LENGTH_SHORT).show()
@@ -310,7 +272,7 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
 
     override fun onConfirmPassword(password: String) {
         if(!password.isNullOrEmpty()) {
-            mFirebase.onConfirmPassword(mUser.email, mPendingUser.email, password) {
+            mFirebase.onConfirmPassword(mUser!!.email, mPendingUser.email, password) {
                 updateUser(mPendingUser)
             }
         }
@@ -364,21 +326,24 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
             }
 
             override fun onDataChange(snapshot: DataSnapshot) {
-                mFeedPosts = ArrayList<FeedPost>()
-                mFeedPosts!!.addAll(snapshot.child(mFirebase.auth.currentUser!!.uid).children.map { it.getValue(FeedPost::class.java)!!.copy(id = it.key!!) }.toTypedArray())
-                mUser.follows.keys.forEach {
-                    mFeedPosts!!.addAll(snapshot.child(it).children.map { it.getValue(FeedPost::class.java)!!.copy(id = it.key!!) }.toTypedArray())
+                if(!mUser.uid.isNullOrEmpty()) {
+                    mFeedPosts = ArrayList<FeedPost>()
+                    mFeedPosts!!.addAll(snapshot.child(mFirebase.auth.currentUser!!.uid).children.map { it.getValue(FeedPost::class.java)!!.copy(id = it.key!!) }.toTypedArray())
+                    mUser!!.follows.keys.forEach {
+                        mFeedPosts!!.addAll(snapshot.child(it).children.map { it.getValue(FeedPost::class.java)!!.copy(id = it.key!!) }.toTypedArray())
+                    }
+                    mFeedPosts = mFeedPosts!!.map { it }.sortedByDescending { it.timeStampDate() }.toMutableList()
+                    if(mFeedPostsCallback != null) {
+                        mFeedPostsCallback!!(mFeedPosts!!)
+                    }
                 }
-                mFeedPosts = mFeedPosts!!.map { it }.sortedByDescending { it.timeStampDate() }.toMutableList()
-                if(mFeedPostsCallback != null) {
-                    mFeedPostsCallback!!(mFeedPosts!!)
+                else {
+                    isPostsWantLoaded = true
                 }
             }
 
         })
-//        if(mFeedPosts != null) {
-//            mFeedPostsCallback!!(mFeedPosts!!)
-//        }
+
     }
 
     override fun detachFeedPosts() {
@@ -393,8 +358,14 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
     override fun getPostBitmap(): Bitmap = mPostBitmap
 
     override fun shareImage(caption: String) {
+
         val photoUri = getImageUri(this, mPostBitmap)
         val uid = mFirebase.auth.currentUser!!.uid
+        fun finishShareFragment() {
+            supportFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
+            supportFragmentManager.beginTransaction().replace(R.id.fragment, ProfileFragment()).commit()
+            bottom_nav_view.menu.get(bottom_nav_view.menu.size() - 1).isChecked = true
+        }
         mFirebase.storage.child("users").child(uid)
                 .child("images").child(photoUri!!.lastPathSegment!!).putFile(photoUri).addOnCompleteListener {
                     contentResolver.delete(photoUri, null, null)
@@ -405,28 +376,27 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
                                 mFirebase.database.child("images").child(uid).push()
                                         .setValue(photoUrl).addOnCompleteListener {
                                             mFirebase.database.child("feed-posts").child(uid).push()
-                                                    .setValue(FeedPost(uid = uid, username = mUser.username, photo = mUser.photo,
+                                                    .setValue(FeedPost(uid = uid, username = mUser!!.username, photo = mUser!!.photo,
                                                     image = photoUrl, caption = caption)).addOnCompleteListener {
-                                                        if(it.isSuccessful) {
-                                                            supportFragmentManager.popBackStack(null, FragmentManager.POP_BACK_STACK_INCLUSIVE)
-                                                            supportFragmentManager.beginTransaction().replace(R.id.fragment, ProfileFragment()).commit()
-                                                        }
+                                                        finishShareFragment()
                                                     }
                                         }
                             }
                             else {
-                                Toast.makeText(this, it.exception!!.message, Toast.LENGTH_SHORT).show()
+                                showToast(it.exception!!.message)
+                                finishShareFragment()
                             }
                         }
-
                     }
                     else {
-                        Toast.makeText(this, it.exception!!.message, Toast.LENGTH_SHORT).show()
+                        showToast(it.exception!!.message)
+                        finishShareFragment()
                     }
                 }
+
     }
 
-    fun getImageUri(inContext: Context, inImage: Bitmap): Uri? {
+    private fun getImageUri(inContext: Context, inImage: Bitmap): Uri? {
         val bytes = ByteArrayOutputStream()
         inImage.compress(Bitmap.CompressFormat.JPEG, 100, bytes)
         val path = MediaStore.Images.Media.insertImage(
@@ -439,10 +409,9 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
     }
 
     override fun getAllUsers(onSuccess: (List<User>) -> Unit) {
-       if(mUsersEventListener == null) {
-           mUsersEventListener = mFirebase.database.child("users").addValueEventListener(object : ValueEventListener {
+
+           mFirebase.database.child("users").addListenerForSingleValueEvent(object : ValueEventListener {
                override fun onCancelled(error: DatabaseError) {
-                   TODO("Not yet implemented")
                }
 
                override fun onDataChange(snapshot: DataSnapshot) {
@@ -453,7 +422,7 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
                }
 
            })
-       }
+
         mAllUsersCallback = onSuccess
         if(mAllUsersCallback != null) {
             mAllUsersCallback!!(mUsers)
@@ -461,7 +430,7 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
     }
 
     override fun detachAllUsers() {
-        mFirebase.database.removeEventListener(mUsersEventListener!!)
+       // mFirebase.database.removeEventListener(mUsersEventListener!!)
         mUsersEventListener = null
         mAllUsersCallback = null
     }
@@ -476,10 +445,8 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
             if(it.isSuccessful) {
                 if(mPostsEventListener != null)
                     mFirebase.database.removeEventListener(mPostsEventListener!!)
-        //        mPostsEventListener = setPostsEventListener()
-
             } else {
-                Toast.makeText(this, it.exception!!.message, Toast.LENGTH_SHORT).show()
+                showToast(it.exception!!.message)
             }
         }
     }
@@ -494,9 +461,8 @@ class HomeActivity : AppCompatActivity(), BaseOnClickListener, BaseFragmentListe
             if(it.isSuccessful) {
                 if(mPostsEventListener != null)
                     mFirebase.database.removeEventListener(mPostsEventListener!!)
-             //   mPostsEventListener = setPostsEventListener()
             } else {
-                Toast.makeText(this, it.exception!!.message, Toast.LENGTH_SHORT).show()
+                showToast(it.exception!!.message)
             }
         }
     }
